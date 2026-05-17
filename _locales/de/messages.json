@@ -35,5 +35,8 @@
   },
   "err_auth_failed": { "message": "Google-Authentifizierung fehlgeschlagen.", "description": "Error: authentication failed" },
   "err_network": { "message": "Netzwerkfehler. Überprüfen Sie Ihre Internetverbindung.", "description": "Error: network issue" },
-  "err_upload_failed": { "message": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut.", "description": "Error: upload failed" }
+  "err_upload_failed": { "message": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut.", "description": "Error: upload failed" },
+  "lang_select_label": {
+    "message": "Sprache"
+  }
 }

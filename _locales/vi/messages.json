@@ -35,5 +35,8 @@
   },
   "err_auth_failed": { "message": "Xác thực Google không thành công.", "description": "Error: authentication failed" },
   "err_network": { "message": "Lỗi mạng. Kiểm tra kết nối internet của bạn.", "description": "Error: network issue" },
-  "err_upload_failed": { "message": "Tải lên không thành công. Vui lòng thử lại.", "description": "Error: upload failed" }
+  "err_upload_failed": { "message": "Tải lên không thành công. Vui lòng thử lại.", "description": "Error: upload failed" },
+  "lang_select_label": {
+    "message": "Ngôn ngữ"
+  }
 }

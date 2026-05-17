@@ -34,6 +34,7 @@ const disconnectBtn = document.getElementById("disconnect-btn");
 const statusMessage = document.getElementById("status-message");
 const btnSpinner    = document.getElementById("btn-spinner");
 const btnText       = uploadBtn.querySelector(".btn-text");
+const langSelect    = document.getElementById("lang-select");
 
 // ----------------------------------------------------------
 // HELPERS UI
@@ -75,8 +76,11 @@ function applyI18n() {
 // ----------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialiser le moteur i18n (charge gcf si nécessaire + fallback en)
-  await initI18n();
+  // Lire la locale persistée
+  const stored = await browser.storage.local.get("locale");
+  const savedLocale = stored.locale || "auto";
+  langSelect.value = savedLocale;
+  await initI18n(savedLocale === "auto" ? null : savedLocale);
 
   // Appliquer les traductions sur tous les attributs data-i18n
   applyI18n();
@@ -123,6 +127,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     setAuthBadge("error", t("popup_auth_error"));
     setStatus(t("err_network"));
   }
+});
+
+// ----------------------------------------------------------
+// SÉLECTEUR DE LANGUE
+// ----------------------------------------------------------
+
+langSelect.addEventListener("change", async () => {
+  const newLocale = langSelect.value;
+  await browser.storage.local.set({ locale: newLocale });
+  await initI18n(newLocale === "auto" ? null : newLocale);
+  applyI18n();
 });
 
 // ----------------------------------------------------------

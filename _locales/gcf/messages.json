@@ -79,5 +79,8 @@
   },
   "err_upload_failed": {
     "message": "Pyès-la pa rivé pati. Éséyé ankò souplé."
+  },
+  "lang_select_label": {
+    "message": "Lang"
   }
 }
