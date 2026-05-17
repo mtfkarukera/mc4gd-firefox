@@ -1,4 +1,4 @@
-# Magic Clipper for Google Drive ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
+# Magic Clipper for Google Drive ![Version 1.0.0](https://img.shields.io/badge/version-1.0.1-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
 
 Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre Google Drive en un seul clic.
 
