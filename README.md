@@ -90,9 +90,15 @@ L'architecture sépare strictement l'UI (popup) et la logique (background) :
 3. Rédigez un commit conventionnel (`feat: ...`, `fix: ...`, `refactor: ...`). **Une fonction par commit.**
 4. Ouvrez une Pull Request.
 
-## 📝 Changelog
+---
 
-*   **v1.0.0** — Version initiale
+## 📋 Changelog
+
+### v1.0.1 — 2026-05-17
+- fix: suppression de `"persistent": false` dans `background` (propriété MV2-only)
+- fix: suppression du bloc `"oauth2"` (propriété Chromium-only, génère un warning Firefox au runtime)
+
+---
 
 ## 📄 Licence
 
