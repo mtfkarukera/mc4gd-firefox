@@ -1,0 +1,39 @@
+{
+  "ext_name": { "message": "Magic Clipper cho Google Drive", "description": "Extension name" },
+  "ext_description": { "message": "Gửi bất kỳ tệp nào Firefox có thể hiển thị trực tiếp vào Google Drive của bạn chỉ bằng một cú nhấp chuột.", "description": "Extension description" },
+  "popup_auth_loading": { "message": "Đang kết nối…", "description": "Auth status: loading" },
+  "popup_auth_connected": { "message": "Đã kết nối", "description": "Auth status: connected" },
+  "popup_auth_error": { "message": "Chưa kết nối", "description": "Auth status: error" },
+  "popup_detecting": { "message": "Đang phân tích thẻ…", "description": "Status when analyzing the current tab" },
+  "popup_idle_label": { "message": "ĐÃ PHÁT HIỆN TỆP", "description": "Label above the detected file" },
+  "popup_no_file": { "message": "Không phát hiện tệp nào", "description": "Message when no file is detected" },
+  "popup_unsupported": { "message": "Thẻ này không chứa tệp được hỗ trợ", "description": "Message when the file type is not supported" },
+  "popup_local_file": { "message": "Tệp cục bộ không được hỗ trợ", "description": "Message when a local file is detected" },
+  "popup_btn_upload": { "message": "⬆️ Gửi lên Google Drive", "description": "Upload button text" },
+  "popup_btn_uploading": { "message": "Đang gửi…", "description": "Upload button text when sending" },
+  "popup_btn_disconnect": { "message": "Ngắt kết nối", "description": "Disconnect button text" },
+  "popup_confirm_disconnect": { "message": "Ngắt kết nối tài khoản Google của bạn khỏi tiện ích mở rộng này?", "description": "Disconnect confirmation message" },
+  "popup_btn_disconnect_confirm": { "message": "Xác nhận ngắt kết nối", "description": "Disconnect button confirmation state" },
+  "popup_uploading_label": { "message": "Đang tải lên…", "description": "Label during upload" },
+  "popup_link_view": { "message": "📂 Xem trong Google Drive", "description": "Link to view the uploaded file" },
+  "popup_success": {
+    "message": "Đã gửi $FILE_NAME$!",
+    "description": "Thông báo thành công với tên tệp",
+    "placeholders": {
+      "file_name": { "content": "$1" }
+    }
+  },
+  "err_local_file": { "message": "Tệp cục bộ không được hỗ trợ. Mở tệp từ một URL trực tuyến.", "description": "Error: local file" },
+  "err_unsupported_type": { "message": "Loại tệp không được hỗ trợ.", "description": "Error: unsupported file type" },
+  "err_quota": { "message": "Không đủ không gian lưu trữ Google Drive.", "description": "Error: out of quota" },
+  "err_download_failed": {
+    "message": "Không thể tải tệp xuống (HTTP $STATUS$).",
+    "description": "Lỗi tải xuống với mã HTTP",
+    "placeholders": {
+      "status": { "content": "$1" }
+    }
+  },
+  "err_auth_failed": { "message": "Xác thực Google không thành công.", "description": "Error: authentication failed" },
+  "err_network": { "message": "Lỗi mạng. Kiểm tra kết nối internet của bạn.", "description": "Error: network issue" },
+  "err_upload_failed": { "message": "Tải lên không thành công. Vui lòng thử lại.", "description": "Error: upload failed" }
+}

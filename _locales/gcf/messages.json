@@ -1,0 +1,83 @@
+{
+  "ext_name": {
+    "message": "Magic Clipper ba Google Drive"
+  },
+  "ext_description": {
+    "message": "Voyé nenpòt ki pyès Firefox pé wouvè, pap-pap, adan Google Drive a-w."
+  },
+  "popup_detecting": {
+    "message": "An ka gadé paj-la…"
+  },
+  "popup_idle_label": {
+    "message": "An détèkté on pyès nou pé voyé"
+  },
+  "popup_no_file": {
+    "message": "Pa ni pon pyès pou nou jwenn la"
+  },
+  "popup_unsupported": {
+    "message": "Paj-lasa pa ni pon fichyé nou pé voyé"
+  },
+  "popup_local_file": {
+    "message": "Nou pa ka pwan pyès ki anlè owdinatè a'w menm"
+  },
+  "popup_btn_upload": {
+    "message": "⬆️ Voyé pyès-la adan Google Drive"
+  },
+  "popup_btn_uploading": {
+    "message": "An ka voyé'y…"
+  },
+  "popup_uploading_label": {
+    "message": "I ka chajé…"
+  },
+  "popup_success": {
+    "message": "$FILE_NAME$ pati !",
+    "placeholders": {
+      "file_name": { "content": "$1" }
+    }
+  },
+  "popup_error_prefix": {
+    "message": "Pwoblèm :"
+  },
+  "popup_link_view": {
+    "message": "📂 Gadé adan Google Drive"
+  },
+  "popup_btn_disconnect": {
+    "message": "Délyannaj"
+  },
+  "popup_auth_connected": {
+    "message": "Lyanné"
+  },
+  "popup_auth_loading": {
+    "message": "Lyannaj la ka fèt…"
+  },
+  "popup_auth_error": {
+    "message": "I pa lyanné"
+  },
+  "popup_confirm_disconnect": {
+    "message": "Délyanné kont Google a-w évè èkstansyon-la sa ?"
+  },
+  "err_local_file": {
+    "message": "Nou pa ka sipòté pyès ki anlè owdinatè a'w menm. Wouvè fichyé-la depi on URL asi entènèt."
+  },
+  "err_unsupported_type": {
+    "message": "Nou pa ka pwan sé kalité pyès-la sa."
+  },
+  "err_download_failed": {
+    "message": "Nou pa rivé chajé pyès-la sa : (HTTP $STATUS$).",
+    "placeholders": {
+      "status": { "content": "$1" }
+    }
+  },
+  "err_auth_failed": {
+    "message": "Lyannaj-la évè Google pa vwè bout."
+  },
+  "err_quota": {
+    "message": "Pa ni asé plas adan Google Drive a-w."
+  },
+  "err_network": {
+    "message": "Pwoblèm rézo. Gadé si ou ni on bon konèksyon."
+  },
+  "err_upload_failed": {
+    "message": "Pyès-la pa rivé pati. Éséyé ankò souplé."
+  }
+}

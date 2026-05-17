@@ -1,0 +1,39 @@
+{
+  "ext_name": { "message": "Magic Clipper para Google Drive", "description": "Extension name" },
+  "ext_description": { "message": "Envía cualquier archivo que Firefox pueda mostrar directamente a tu Google Drive con un solo clic.", "description": "Extension description" },
+  "popup_auth_loading": { "message": "Conectando…", "description": "Auth status: loading" },
+  "popup_auth_connected": { "message": "Conectado", "description": "Auth status: connected" },
+  "popup_auth_error": { "message": "No conectado", "description": "Auth status: error" },
+  "popup_detecting": { "message": "Analizando pestaña…", "description": "Status when analyzing the current tab" },
+  "popup_idle_label": { "message": "ARCHIVO DETECTADO", "description": "Label above the detected file" },
+  "popup_no_file": { "message": "Ningún archivo detectado", "description": "Message when no file is detected" },
+  "popup_unsupported": { "message": "Esta pestaña no contiene un archivo compatible", "description": "Message when the file type is not supported" },
+  "popup_local_file": { "message": "Los archivos locales no son compatibles", "description": "Message when a local file is detected" },
+  "popup_btn_upload": { "message": "⬆️ Enviar a Google Drive", "description": "Upload button text" },
+  "popup_btn_uploading": { "message": "Enviando…", "description": "Upload button text when sending" },
+  "popup_btn_disconnect": { "message": "Desconectar", "description": "Disconnect button text" },
+  "popup_confirm_disconnect": { "message": "¿Desconectar tu cuenta de Google de esta extensión?", "description": "Disconnect confirmation message" },
+  "popup_btn_disconnect_confirm": { "message": "Confirmar desconexión", "description": "Disconnect button confirmation state" },
+  "popup_uploading_label": { "message": "Carga en curso…", "description": "Label during upload" },
+  "popup_link_view": { "message": "📂 Ver en Google Drive", "description": "Link to view the uploaded file" },
+  "popup_success": {
+    "message": "¡$FILE_NAME$ enviado!",
+    "description": "Mensaje de éxito con nombre de archivo",
+    "placeholders": {
+      "file_name": { "content": "$1" }
+    }
+  },
+  "err_local_file": { "message": "Los archivos locales no son compatibles. Abre el archivo desde una URL en línea.", "description": "Error: local file" },
+  "err_unsupported_type": { "message": "Tipo de archivo no compatible.", "description": "Error: unsupported file type" },
+  "err_quota": { "message": "Espacio de almacenamiento de Google Drive insuficiente.", "description": "Error: out of quota" },
+  "err_download_failed": {
+    "message": "No se pudo descargar el archivo (HTTP $STATUS$).",
+    "description": "Error de descarga con código HTTP",
+    "placeholders": {
+      "status": { "content": "$1" }
+    }
+  },
+  "err_auth_failed": { "message": "Error en la autenticación de Google.", "description": "Error: authentication failed" },
+  "err_network": { "message": "Error de red. Comprueba tu conexión a Internet.", "description": "Error: network issue" },
+  "err_upload_failed": { "message": "Error en la carga. Inténtalo de nuevo.", "description": "Error: upload failed" }
+}

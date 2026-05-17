@@ -1,0 +1,39 @@
+{
+  "ext_name": { "message": "Magic Clipper for Google Drive", "description": "Extension name" },
+  "ext_description": { "message": "Send any file Firefox can display directly to your Google Drive in one click.", "description": "Extension description" },
+  "popup_auth_loading": { "message": "Connecting…", "description": "Auth status: loading" },
+  "popup_auth_connected": { "message": "Connected", "description": "Auth status: connected" },
+  "popup_auth_error": { "message": "Not connected", "description": "Auth status: error" },
+  "popup_detecting": { "message": "Analyzing tab…", "description": "Status when analyzing the current tab" },
+  "popup_idle_label": { "message": "DETECTED FILE", "description": "Label above the detected file" },
+  "popup_no_file": { "message": "No file detected", "description": "Message when no file is detected" },
+  "popup_unsupported": { "message": "This tab doesn't contain a supported file", "description": "Message when the file type is not supported" },
+  "popup_local_file": { "message": "Local files are not supported", "description": "Message when a local file is detected" },
+  "popup_btn_upload": { "message": "⬆️ Send to Google Drive", "description": "Upload button text" },
+  "popup_btn_uploading": { "message": "Sending…", "description": "Upload button text when sending" },
+  "popup_btn_disconnect": { "message": "Disconnect", "description": "Disconnect button text" },
+  "popup_confirm_disconnect": { "message": "Disconnect your Google account from this extension?", "description": "Disconnect confirmation message" },
+  "popup_btn_disconnect_confirm": { "message": "Confirm disconnect", "description": "Disconnect button confirmation state" },
+  "popup_uploading_label": { "message": "Upload in progress…", "description": "Label during upload" },
+  "popup_link_view": { "message": "📂 View in Google Drive", "description": "Link to view the uploaded file" },
+  "popup_success": {
+    "message": "$FILE_NAME$ sent!",
+    "description": "Success message with file name placeholder",
+    "placeholders": {
+      "file_name": { "content": "$1" }
+    }
+  },
+  "err_local_file": { "message": "Local files are not supported. Open the file from an online URL.", "description": "Error: local file" },
+  "err_unsupported_type": { "message": "Unsupported file type.", "description": "Error: unsupported file type" },
+  "err_quota": { "message": "Insufficient Google Drive storage space.", "description": "Error: out of quota" },
+  "err_download_failed": {
+    "message": "Could not download file (HTTP $STATUS$).",
+    "description": "Error: download failed with status code",
+    "placeholders": {
+      "status": { "content": "$1" }
+    }
+  },
+  "err_auth_failed": { "message": "Google authentication failed.", "description": "Error: authentication failed" },
+  "err_network": { "message": "Network error. Check your internet connection.", "description": "Error: network issue" },
+  "err_upload_failed": { "message": "Upload failed. Please try again.", "description": "Error: upload failed" }
+}

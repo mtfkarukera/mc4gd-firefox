@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="ext_name"></title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon"></div>
+      <span data-i18n="ext_name"></span>
+    </div>
+    <div id="auth-status" class="status-badge status-loading" data-i18n="popup_auth_loading"></div>
+  </header>
+
+  <!-- FICHIER DÉTECTÉ -->
+  <section class="file-section">
+    <label data-i18n="popup_idle_label"></label>
+    <div id="file-info" class="file-info">
+      <span id="file-icon" class="file-icon">📄</span>
+      <span id="file-name" class="file-name" data-i18n="popup_detecting"></span>
+    </div>
+  </section>
+
+  <!-- ACTION PRINCIPALE -->
+  <section class="action-section">
+    <button id="upload-btn" class="btn primary-btn" disabled>
+      <span class="btn-text" data-i18n="popup_btn_upload"></span>
+      <span id="btn-spinner" class="spinner hidden"></span>
+    </button>
+    <div id="drive-link-row" class="drive-link-row hidden">
+      <a id="drive-link" href="#" target="_blank" data-i18n="popup_link_view"></a>
+    </div>
+  </section>
+
+  <!-- STATUT -->
+  <footer class="app-footer">
+    <div id="status-message" class="status-message" data-i18n="popup_detecting"></div>
+    <button id="disconnect-btn" class="btn close-btn" data-i18n="popup_btn_disconnect"></button>
+  </footer>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

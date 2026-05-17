@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+*.xpi
+.amo-upload-uuid
+
+# IDE
+*.code-workspace
+.vscode/
+.idea/
+
+# Agents & directives
+.agents/
+AGENTS.md
+ARCHITECTURE.md
+API-REFERENCE.md
+
+# Dev docs (internes)
+spec.md
+plan.md
+tasks.md
+
+# Libs obsolètes
+lib/html2pdf.bundle.min.js
+
+# Dev / signing scripts
+sign.sh
+web-ext-config.cjs
+web-ext-artifacts/
+tools/
