@@ -3,7 +3,7 @@
 // Logique UI — machine à états + messaging background
 // ============================================================
 
-import { initI18n, t } from "../../shared/utils.js";
+import { initI18n, t } from "../shared/utils.js";
 
 // ----------------------------------------------------------
 // ICÔNE MIME — locale à popup.js

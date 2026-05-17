@@ -3,7 +3,7 @@
 // Auth OAuth2 + détection format + dossier Drive + upload
 // ============================================================
 
-import { FOLDER_NAME, MIME_MAP, initI18n, t, getFileNameFromUrl } from "../../shared/utils.js";
+import { FOLDER_NAME, MIME_MAP, initI18n, t, getFileNameFromUrl } from "../shared/utils.js";
 
 // ----------------------------------------------------------
 // CONSTANTES
