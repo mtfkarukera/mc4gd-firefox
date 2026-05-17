@@ -35,5 +35,8 @@
   },
   "err_auth_failed": { "message": "Error en la autenticación de Google.", "description": "Error: authentication failed" },
   "err_network": { "message": "Error de red. Comprueba tu conexión a Internet.", "description": "Error: network issue" },
-  "err_upload_failed": { "message": "Error en la carga. Inténtalo de nuevo.", "description": "Error: upload failed" }
+  "err_upload_failed": { "message": "Error en la carga. Inténtalo de nuevo.", "description": "Error: upload failed" },
+  "lang_select_label": {
+    "message": "Idioma"
+  }
 }

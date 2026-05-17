@@ -22,7 +22,7 @@ export const MIME_MAP = {
 let messages = {};
 let fallbackMessages = {};
 
-export async function initI18n() {
+export async function initI18n(forcedLocale = null) {
   try {
     const fallbackRes = await fetch(browser.runtime.getURL("_locales/en/messages.json"));
     fallbackMessages = await fallbackRes.json();
@@ -30,7 +30,13 @@ export async function initI18n() {
     console.warn("Failed to load fallback locale 'en'", e);
   }
 
-  let locale = browser.i18n.getUILanguage().split('-')[0];
+  let locale;
+  if (forcedLocale && forcedLocale !== "auto") {
+    locale = forcedLocale;
+  } else {
+    locale = browser.i18n.getUILanguage().split('-')[0];
+  }
+
   if (locale === 'en') {
     messages = fallbackMessages;
     return;

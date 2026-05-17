@@ -196,6 +196,24 @@ header, section, footer {
 }
 
 /* ----------------------------------------------------------
+   SÉLECTEUR DE LANGUE
+   ---------------------------------------------------------- */
+
+#lang-select {
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-element);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+#lang-select:focus {
+  outline: 1px solid var(--primary-color);
+}
+
+/* ----------------------------------------------------------
    BADGE STATUT (auth)
    ---------------------------------------------------------- */
 

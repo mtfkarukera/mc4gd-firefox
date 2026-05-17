@@ -35,5 +35,8 @@
   },
   "err_auth_failed": { "message": "Échec de l'authentification Google.", "description": "Error: authentication failed" },
   "err_network": { "message": "Erreur réseau. Vérifiez votre connexion Internet.", "description": "Error: network issue" },
-  "err_upload_failed": { "message": "L'envoi a échoué. Veuillez réessayer.", "description": "Error: upload failed" }
+  "err_upload_failed": { "message": "L'envoi a échoué. Veuillez réessayer.", "description": "Error: upload failed" },
+  "lang_select_label": {
+    "message": "Langue"
+  }
 }

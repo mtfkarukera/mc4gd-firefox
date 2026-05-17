@@ -35,5 +35,8 @@
   },
   "err_auth_failed": { "message": "Google authentication failed.", "description": "Error: authentication failed" },
   "err_network": { "message": "Network error. Check your internet connection.", "description": "Error: network issue" },
-  "err_upload_failed": { "message": "Upload failed. Please try again.", "description": "Error: upload failed" }
+  "err_upload_failed": { "message": "Upload failed. Please try again.", "description": "Error: upload failed" },
+  "lang_select_label": {
+    "message": "Language"
+  }
 }
