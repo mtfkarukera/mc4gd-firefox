@@ -1,4 +1,4 @@
-# Magic Clipper for Google Drive ![Version 1.0.0](https://img.shields.io/badge/version-1.0.1-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
+# Magic Clipper for Google Drive ![Version 1.0.0](https://img.shields.io/badge/version-1.0.2-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
 
 Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre Google Drive en un seul clic.
 
@@ -93,6 +93,10 @@ L'architecture sépare strictement l'UI (popup) et la logique (background) :
 ---
 
 ## 📋 Changelog
+
+### v1.0.2 — 2026-05-17
+- fix: restauration de `<all_urls>` dans `host_permissions`
+- fix: correction des chemins d'import de `utils.js`
 
 ### v1.0.1 — 2026-05-17
 - fix: suppression de `"persistent": false` dans `background` (propriété MV2-only)
