@@ -12,7 +12,6 @@
   "popup_btn_upload": { "message": "⬆️ Send to Google Drive", "description": "Upload button text" },
   "popup_btn_uploading": { "message": "Sending…", "description": "Upload button text when sending" },
   "popup_btn_disconnect": { "message": "Disconnect", "description": "Disconnect button text" },
-  "popup_confirm_disconnect": { "message": "Disconnect your Google account from this extension?", "description": "Disconnect confirmation message" },
   "popup_btn_disconnect_confirm": { "message": "Confirm disconnect", "description": "Disconnect button confirmation state" },
   "popup_uploading_label": { "message": "Upload in progress…", "description": "Label during upload" },
   "popup_link_view": { "message": "📂 View in Google Drive", "description": "Link to view the uploaded file" },

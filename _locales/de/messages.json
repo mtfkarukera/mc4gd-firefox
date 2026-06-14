@@ -12,7 +12,6 @@
   "popup_btn_upload": { "message": "⬆️ An Google Drive senden", "description": "Upload button text" },
   "popup_btn_uploading": { "message": "Wird gesendet…", "description": "Upload button text when sending" },
   "popup_btn_disconnect": { "message": "Trennen", "description": "Disconnect button text" },
-  "popup_confirm_disconnect": { "message": "Möchten Sie Ihr Google-Konto von dieser Erweiterung trennen?", "description": "Disconnect confirmation message" },
   "popup_btn_disconnect_confirm": { "message": "Trennung bestätigen", "description": "Disconnect button confirmation state" },
   "popup_uploading_label": { "message": "Upload läuft…", "description": "Label during upload" },
   "popup_link_view": { "message": "📂 In Google Drive ansehen", "description": "Link to view the uploaded file" },

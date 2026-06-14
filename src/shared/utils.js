@@ -12,15 +12,31 @@ export const MIME_MAP = {
   "gif": "image/gif",
   "webp": "image/webp",
   "svg": "image/svg+xml",
+  "avif": "image/avif",
+  "bmp": "image/bmp",
+  "ico": "image/x-icon",
+  "tiff": "image/tiff",
   "mp3": "audio/mpeg",
   "mp4": "video/mp4",
   "webm": "video/webm",
   "ogg": "audio/ogg",
   "wav": "audio/wav",
+  "aac": "audio/aac",
+  "flac": "audio/flac",
+  "m4a": "audio/mp4",
+  "mov": "video/quicktime",
+  "mpeg": "video/mpeg",
   "txt": "text/plain",
   "md": "text/markdown",
   "csv": "text/csv",
-  "json": "application/json"
+  "json": "application/json",
+  "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "zip": "application/zip",
+  "tar": "application/x-tar",
+  "gz": "application/gzip",
+  "epub": "application/epub+zip"
 };
 
 let messages = {};

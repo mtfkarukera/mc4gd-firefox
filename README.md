@@ -1,4 +1,4 @@
-# Magic Clipper for Google Drive ![Version 1.5.0](https://img.shields.io/badge/version-1.5.0-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
+# Magic Clipper for Google Drive ![Version 1.6.0](https://img.shields.io/badge/version-1.6.0-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
 
 Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre Google Drive en un seul clic.
 
@@ -7,7 +7,7 @@ Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre G
 | Fonctionnalité | Détails |
 | --- | --- |
 | Détection automatique | Analyse de l'URL et du type de contenu de l'onglet actif. |
-| 16 Formats supportés | PDF, PNG, JPG, JPEG, GIF, WEBP, SVG, MP3, MP4, WEBM, OGG, WAV, TXT, MD, CSV, JSON. |
+| 32 Formats supportés | PDF, PNG, JPG, JPEG, GIF, WEBP, SVG, AVIF, BMP, ICO, TIFF, MP3, MP4, WEBM, OGG, WAV, AAC, FLAC, M4A, MOV, MPEG, TXT, MD, CSV, JSON, DOCX, XLSX, PPTX, ZIP, TAR, GZ, EPUB. |
 | Dossier intelligent | Création automatique d'un dossier `"Imports Magic Clipper"` s'il n'existe pas. |
 | Résilience API | Système de retry automatique (1 essai) sur erreurs 401 (token expiré) et 404 (dossier supprimé). |
 | Multilingue (i18n) | Traduction native en 5 langues (EN, FR, DE, ES, VI) avec fallback automatique. |

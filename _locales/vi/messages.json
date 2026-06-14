@@ -12,7 +12,6 @@
   "popup_btn_upload": { "message": "⬆️ Gửi lên Google Drive", "description": "Upload button text" },
   "popup_btn_uploading": { "message": "Đang gửi…", "description": "Upload button text when sending" },
   "popup_btn_disconnect": { "message": "Ngắt kết nối", "description": "Disconnect button text" },
-  "popup_confirm_disconnect": { "message": "Ngắt kết nối tài khoản Google của bạn khỏi tiện ích mở rộng này?", "description": "Disconnect confirmation message" },
   "popup_btn_disconnect_confirm": { "message": "Xác nhận ngắt kết nối", "description": "Disconnect button confirmation state" },
   "popup_uploading_label": { "message": "Đang tải lên…", "description": "Label during upload" },
   "popup_link_view": { "message": "📂 Xem trong Google Drive", "description": "Link to view the uploaded file" },

@@ -5,6 +5,17 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.6.0] — 2026-06-15
+
+### Ajouté
+- Prise en charge de 16 nouveaux formats de fichiers dans `MIME_MAP` (docx, xlsx, pptx, zip, tar, gz, epub, avif, bmp, ico, tiff, mov, mpeg, aac, flac, m4a), portant à 32 le nombre total de formats gérés.
+
+### Modifié
+- Nettoyage des fichiers i18n : suppression des clés de traductions inutilisées (`popup_confirm_disconnect` dans les 6 locales et `popup_error_prefix` dans la locale `gcf`).
+- Optimisation et mise en conformité de `icon.svg` (taille réduite à 13 Ko et format carré 1000x1000px) éliminant tous les warnings du linter Firefox tout en conservant le graphisme original.
+- Restauration des règles de style du logo (`background-color` et `border-radius` sur `.logo-icon` dans `popup.css`) pour s'adapter à la transparence du logo original.
+- Alignement et réécriture de la documentation technique (`README.md`, `ARCHITECTURE.md` et `AGENTS.md`).
+
 ## [1.5.0] — 2026-06-15
 
 ### Ajouté

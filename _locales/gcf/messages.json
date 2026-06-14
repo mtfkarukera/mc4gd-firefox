@@ -35,9 +35,6 @@
       "file_name": { "content": "$1" }
     }
   },
-  "popup_error_prefix": {
-    "message": "Pwoblèm :"
-  },
   "popup_link_view": {
     "message": "📂 Gadé adan Google Drive"
   },
@@ -52,9 +49,6 @@
   },
   "popup_auth_error": {
     "message": "I pa lyanné"
-  },
-  "popup_confirm_disconnect": {
-    "message": "Délyanné kont Google a-w évè èkstansyon-la sa ?"
   },
   "err_local_file": {
     "message": "Nou pa ka sipòté pyès ki anlè owdinatè a'w menm. Wouvè fichyé-la depi on URL asi entènèt."
