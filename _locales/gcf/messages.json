@@ -100,5 +100,14 @@
   },
   "err_google_server": {
     "message": "Pwoblèm sèvè Google Drive. Éséyé plita souplé."
+  },
+  "onboarding_title": {
+    "message": "Byenvini anlè Magic Clipper"
+  },
+  "onboarding_description": {
+    "message": "Voye PDF, foto é dot fichié ouve an Firefox la dirèk an Google Drive a-w san oken sèvè."
+  },
+  "onboarding_btn_ok": {
+    "message": "Kòmansé"
   }
 }

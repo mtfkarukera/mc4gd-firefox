@@ -25,6 +25,7 @@ export const MIME_MAP = {
 
 let messages = {};
 let fallbackMessages = {};
+export let currentLocale = "en";
 
 export async function initI18n(forcedLocale = null) {
   try {
@@ -45,6 +46,7 @@ export async function initI18n(forcedLocale = null) {
   if (!allowedLocales.includes(locale)) {
     locale = "en";
   }
+  currentLocale = locale;
 
   if (locale === 'en') {
     messages = fallbackMessages;

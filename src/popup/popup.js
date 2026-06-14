@@ -2,12 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// ============================================================
 // Magic Clipper for Google Drive — popup.js
 // Logique UI — machine à états + messaging background
 // ============================================================
 
-import { initI18n, t } from "../shared/utils.js";
+import { initI18n, t, currentLocale } from "../shared/utils.js";
 
 // ----------------------------------------------------------
 // ICÔNE MIME — locale à popup.js
@@ -34,11 +33,13 @@ const fileIcon      = document.getElementById("file-icon");
 const fileName      = document.getElementById("file-name");
 const driveLinkRow  = document.getElementById("drive-link-row");
 const driveLink     = document.getElementById("drive-link");
-const disconnectBtn = document.getElementById("disconnect-btn");
-const statusMessage = document.getElementById("status-message");
-const btnSpinner    = document.getElementById("btn-spinner");
-const btnText       = uploadBtn.querySelector(".btn-text");
-const langSelect    = document.getElementById("lang-select");
+const disconnectBtn     = document.getElementById("disconnect-btn");
+const statusMessage     = document.getElementById("status-message");
+const btnSpinner        = document.getElementById("btn-spinner");
+const btnText           = uploadBtn.querySelector(".btn-text");
+const langSelect        = document.getElementById("lang-select");
+const onboardingOverlay = document.getElementById("onboarding-overlay");
+const onboardingBtn     = document.getElementById("onboarding-btn");
 
 // ----------------------------------------------------------
 // HELPERS UI
@@ -73,6 +74,7 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-aria-label]").forEach(el => {
     el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
   });
+  document.documentElement.lang = currentLocale;
 }
 
 // ----------------------------------------------------------
@@ -81,13 +83,23 @@ function applyI18n() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Lire la locale persistée
-  const stored = await browser.storage.local.get("locale");
+  const stored = await browser.storage.local.get(["locale", "hasSeenWelcome"]);
   const savedLocale = stored.locale || "auto";
   langSelect.value = savedLocale;
   await initI18n(savedLocale === "auto" ? null : savedLocale);
 
   // Appliquer les traductions sur tous les attributs data-i18n
   applyI18n();
+
+  // Gérer l'onboarding
+  if (!stored.hasSeenWelcome) {
+    onboardingOverlay.classList.remove("hidden");
+  }
+
+  onboardingBtn.addEventListener("click", async () => {
+    onboardingOverlay.classList.add("hidden");
+    await browser.storage.local.set({ hasSeenWelcome: true });
+  });
 
   // État initial : détection en cours
   setAuthBadge("loading", t("popup_auth_loading"));
@@ -199,10 +211,12 @@ disconnectBtn.addEventListener("click", async () => {
   if (!disconnectPending) {
     // Premier clic : passer en état de confirmation
     disconnectPending = true;
-    disconnectBtn.textContent = t("popup_confirm_disconnect");
+    disconnectBtn.textContent = t("popup_btn_disconnect_confirm");
+    disconnectBtn.classList.add("confirm-active");
     disconnectTimer = setTimeout(() => {
       disconnectPending = false;
       disconnectBtn.textContent = t("popup_btn_disconnect");
+      disconnectBtn.classList.remove("confirm-active");
     }, 3000);
     return;
   }
@@ -210,6 +224,7 @@ disconnectBtn.addEventListener("click", async () => {
   // Second clic dans les 3s : exécuter la déconnexion
   clearTimeout(disconnectTimer);
   disconnectPending = false;
+  disconnectBtn.classList.remove("confirm-active");
 
   try {
     await browser.runtime.sendMessage({ action: "disconnect" });

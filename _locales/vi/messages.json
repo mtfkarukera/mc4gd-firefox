@@ -58,5 +58,17 @@
   "err_google_server": {
     "message": "Lỗi máy chủ Google Drive. Vui lòng thử lại sau.",
     "description": "Error: google server down"
+  },
+  "onboarding_title": {
+    "message": "Chào mừng đến với Magic Clipper",
+    "description": "Onboarding title"
+  },
+  "onboarding_description": {
+    "message": "Tải tệp PDF, hình ảnh và tài liệu mở trong Firefox trực tiếp lên Google Drive một cách bảo mật và cục bộ.",
+    "description": "Onboarding description"
+  },
+  "onboarding_btn_ok": {
+    "message": "Bắt đầu",
+    "description": "Onboarding button text"
   }
 }

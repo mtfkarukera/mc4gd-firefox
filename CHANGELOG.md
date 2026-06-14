@@ -5,6 +5,20 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.5.0] — 2026-06-15
+
+### Ajouté
+- Écran d'onboarding/bienvenue s'affichant lors du premier démarrage avec stockage persistant du statut (`hasSeenWelcome`) dans `browser.storage.local`.
+- Ajout de l'image du logo vectoriel (`icon.svg`) dans l'en-tête de la popup.
+- Styles `:focus-visible` pour la navigation au clavier (select, bouton envoi, lien, bouton déconnexion, bouton d'accueil).
+- Attributs d'accessibilité ARIA : `aria-hidden="true"` sur le spinner, `aria-live="polite"` sur le message de statut.
+- Configuration dynamique de la langue du document (`document.documentElement.lang`) lors du changement de locale.
+
+### Modifié
+- Remplacement du `<label>` non sémantique de la section de détection par un titre sémantique `<h2>` avec styles CSS correspondants.
+- Correction de l'état de confirmation de déconnexion : utilisation de la traduction courte correcte (`popup_btn_disconnect_confirm`) et ajout d'une classe CSS de confirmation visuelle `.confirm-active` (couleur ambre).
+- Amélioration des contrastes de couleurs en modes clair et sombre pour répondre aux critères WCAG AA (correction du texte de déconnexion au survol en mode sombre et ajustement du vert de succès).
+
 ## [1.4.0] — 2026-06-15
 
 ### Ajouté

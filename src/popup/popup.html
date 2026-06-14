@@ -14,7 +14,7 @@
   <!-- HEADER -->
   <header class="app-header">
     <div class="logo">
-      <div class="logo-icon"></div>
+      <img class="logo-icon" src="../../icons/icon.svg" alt="Logo" aria-hidden="true" />
       <span data-i18n="ext_name"></span>
     </div>
     <div id="auth-status" class="status-badge status-loading" data-i18n="popup_auth_loading"></div>
@@ -26,7 +26,7 @@
 
   <!-- FICHIER DÉTECTÉ -->
   <section class="file-section">
-    <label data-i18n="popup_idle_label"></label>
+    <h2 class="section-title" data-i18n="popup_idle_label"></h2>
     <div id="file-info" class="file-info">
       <span id="file-icon" class="file-icon">📄</span>
       <span id="file-name" class="file-name" data-i18n="popup_detecting"></span>
@@ -37,7 +37,7 @@
   <section class="action-section">
     <button id="upload-btn" class="btn primary-btn" disabled>
       <span class="btn-text" data-i18n="popup_btn_upload"></span>
-      <span id="btn-spinner" class="spinner hidden"></span>
+      <span id="btn-spinner" class="spinner hidden" aria-hidden="true"></span>
     </button>
     <div id="drive-link-row" class="drive-link-row hidden">
       <a id="drive-link" href="#" target="_blank" rel="noopener noreferrer" data-i18n="popup_link_view"></a>
@@ -46,9 +46,19 @@
 
   <!-- STATUT -->
   <footer class="app-footer">
-    <div id="status-message" class="status-message" data-i18n="popup_detecting"></div>
+    <div id="status-message" class="status-message" data-i18n="popup_detecting" aria-live="polite"></div>
     <button id="disconnect-btn" class="btn close-btn" data-i18n="popup_btn_disconnect"></button>
   </footer>
+
+  <!-- ONBOARDING OVERLAY -->
+  <div id="onboarding-overlay" class="onboarding-overlay hidden">
+    <div class="onboarding-card">
+      <img class="onboarding-logo" src="../../icons/icon.svg" alt="Logo" aria-hidden="true" />
+      <h1 data-i18n="onboarding_title"></h1>
+      <p data-i18n="onboarding_description"></p>
+      <button id="onboarding-btn" class="btn primary-btn" data-i18n="onboarding_btn_ok"></button>
+    </div>
+  </div>
 
   <script src="popup.js" type="module"></script>
 </body>

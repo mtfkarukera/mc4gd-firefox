@@ -58,5 +58,17 @@
   "err_google_server": {
     "message": "Google Drive-Serverfehler. Bitte versuchen Sie es später noch einmal.",
     "description": "Error: google server down"
+  },
+  "onboarding_title": {
+    "message": "Willkommen bei Magic Clipper",
+    "description": "Onboarding title"
+  },
+  "onboarding_description": {
+    "message": "Laden Sie PDFs, Bilder und andere geöffnete Dateien aus Firefox direkt und sicher auf Google Drive hoch.",
+    "description": "Onboarding description"
+  },
+  "onboarding_btn_ok": {
+    "message": "Loslegen",
+    "description": "Onboarding button text"
   }
 }
