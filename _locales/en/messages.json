@@ -69,5 +69,31 @@
   "onboarding_btn_ok": {
     "message": "Get Started",
     "description": "Onboarding button text"
+  },
+  "popup_state_downloading": {
+    "message": "Downloading… ($PERCENT$%)",
+    "description": "Progress state: downloading from web",
+    "placeholders": {
+      "percent": { "content": "$1" }
+    }
+  },
+  "popup_state_uploading": {
+    "message": "Sending to Drive… ($PERCENT$%)",
+    "description": "Progress state: uploading to Drive",
+    "placeholders": {
+      "percent": { "content": "$1" }
+    }
+  },
+  "popup_btn_cancel": {
+    "message": "❌ Cancel",
+    "description": "Cancel button text"
+  },
+  "err_upload_aborted": {
+    "message": "Upload cancelled.",
+    "description": "Error: upload cancelled by user"
+  },
+  "err_file_too_large_50": {
+    "message": "The file is too large (maximum size is 200 MB).",
+    "description": "Error: file exceeds 200MB limit"
   }
 }

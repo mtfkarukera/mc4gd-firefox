@@ -69,5 +69,31 @@
   "onboarding_btn_ok": {
     "message": "Bắt đầu",
     "description": "Onboarding button text"
+  },
+  "popup_state_downloading": {
+    "message": "Đang tải xuống… ($PERCENT$%)",
+    "description": "Progress state: downloading from web",
+    "placeholders": {
+      "percent": { "content": "$1" }
+    }
+  },
+  "popup_state_uploading": {
+    "message": "Đang gửi lên Drive… ($PERCENT$%)",
+    "description": "Progress state: uploading to Drive",
+    "placeholders": {
+      "percent": { "content": "$1" }
+    }
+  },
+  "popup_btn_cancel": {
+    "message": "❌ Hủy",
+    "description": "Cancel button text"
+  },
+  "err_upload_aborted": {
+    "message": "Đã hủy tải lên.",
+    "description": "Error: upload cancelled by user"
+  },
+  "err_file_too_large_50": {
+    "message": "Tệp quá lớn (kích thước tối đa là 200 MB).",
+    "description": "Error: file exceeds 200MB limit"
   }
 }

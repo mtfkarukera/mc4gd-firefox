@@ -103,5 +103,26 @@
   },
   "onboarding_btn_ok": {
     "message": "Kòmansé"
+  },
+  "popup_state_downloading": {
+    "message": "An ka chajé fichyé-la… ($PERCENT$%)",
+    "placeholders": {
+      "percent": { "content": "$1" }
+    }
+  },
+  "popup_state_uploading": {
+    "message": "Fichyé-la ka pati an Drive… ($PERCENT$%)",
+    "placeholders": {
+      "percent": { "content": "$1" }
+    }
+  },
+  "popup_btn_cancel": {
+    "message": "❌ Annilé"
+  },
+  "err_upload_aborted": {
+    "message": "Voyaj-la annilé."
+  },
+  "err_file_too_large_50": {
+    "message": "Fichyé-la twò gwo (maksimòm sé 200 Mo)."
   }
 }

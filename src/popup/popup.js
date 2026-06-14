@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Magic Clipper for Google Drive — popup.js
-// Logique UI — machine à états + messaging background
+// Logique UI — machine à états + messaging background + progression
 // ============================================================
 
 import { initI18n, t, currentLocale } from "../shared/utils.js";
@@ -26,13 +26,13 @@ function getIconForMime(mimeType) {
 // RÉFÉRENCES DOM
 // ----------------------------------------------------------
 
-const uploadBtn     = document.getElementById("upload-btn");
-const authStatus    = document.getElementById("auth-status");
-const fileInfo      = document.getElementById("file-info");
-const fileIcon      = document.getElementById("file-icon");
-const fileName      = document.getElementById("file-name");
-const driveLinkRow  = document.getElementById("drive-link-row");
-const driveLink     = document.getElementById("drive-link");
+const uploadBtn         = document.getElementById("upload-btn");
+const authStatus        = document.getElementById("auth-status");
+const fileInfo          = document.getElementById("file-info");
+const fileIcon          = document.getElementById("file-icon");
+const fileName          = document.getElementById("file-name");
+const driveLinkRow      = document.getElementById("drive-link-row");
+const driveLink         = document.getElementById("drive-link");
 const disconnectBtn     = document.getElementById("disconnect-btn");
 const statusMessage     = document.getElementById("status-message");
 const btnSpinner        = document.getElementById("btn-spinner");
@@ -40,6 +40,10 @@ const btnText           = uploadBtn.querySelector(".btn-text");
 const langSelect        = document.getElementById("lang-select");
 const onboardingOverlay = document.getElementById("onboarding-overlay");
 const onboardingBtn     = document.getElementById("onboarding-btn");
+const progressContainer = document.getElementById("progress-container");
+const progressBar       = document.getElementById("progress-bar");
+
+let isUploading = false;
 
 // ----------------------------------------------------------
 // HELPERS UI
@@ -49,15 +53,43 @@ function setStatus(msg) {
   statusMessage.textContent = msg;
 }
 
+// ARIA live region update
+function setStatusLive(msg) {
+  statusMessage.textContent = msg;
+}
+
 function setAuthBadge(state, label) {
   authStatus.className = "status-badge status-" + state;
   authStatus.textContent = label;
 }
 
-function setLoading(loading) {
-  uploadBtn.disabled = loading;
-  btnSpinner.classList.toggle("hidden", !loading);
-  btnText.textContent = loading ? t("popup_btn_uploading") : t("popup_btn_upload");
+function setTransferState(state, percent) {
+  if (state === "downloading" || state === "uploading") {
+    isUploading = true;
+    progressContainer.classList.remove("hidden");
+    progressBar.style.width = percent + "%";
+    progressBar.setAttribute("aria-valuenow", percent);
+    
+    if (state === "downloading") {
+      setStatusLive(t("popup_state_downloading", { PERCENT: percent }));
+    } else {
+      setStatusLive(t("popup_state_uploading", { PERCENT: percent }));
+    }
+    
+    btnSpinner.classList.add("hidden");
+    uploadBtn.disabled = false;
+    uploadBtn.classList.add("cancel-active");
+    btnText.textContent = t("popup_btn_cancel");
+    setAuthBadge("loading", t("popup_btn_uploading"));
+  } else {
+    isUploading = false;
+    progressContainer.classList.add("hidden");
+    progressBar.style.width = "0%";
+    progressBar.setAttribute("aria-valuenow", 0);
+    uploadBtn.classList.remove("cancel-active");
+    btnSpinner.classList.add("hidden");
+    btnText.textContent = t("popup_btn_upload");
+  }
 }
 
 // ----------------------------------------------------------
@@ -101,6 +133,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     await browser.storage.local.set({ hasSeenWelcome: true });
   });
 
+  // Reconnexion : demander au background s'il y a un upload actif pour cet onglet
+  try {
+    const uploadStatus = await browser.runtime.sendMessage({ action: "getUploadStatus" });
+    if (uploadStatus && (uploadStatus.state === "downloading" || uploadStatus.state === "uploading")) {
+      fileIcon.textContent = getIconForMime(uploadStatus.mimeType);
+      fileName.textContent = uploadStatus.fileName;
+      fileInfo.classList.remove("warning");
+      setTransferState(uploadStatus.state, uploadStatus.percent);
+      return;
+    }
+  } catch (e) {
+    // Continuer vers l'init standard en cas d'erreur
+  }
+
   // État initial : détection en cours
   setAuthBadge("loading", t("popup_auth_loading"));
   setStatus(t("popup_detecting"));
@@ -131,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         setStatus(t("err_private_network"));
       } else if (result.reason === "file_too_large") {
         fileName.textContent = t("popup_unsupported");
-        setStatus(t("err_file_too_large"));
+        setStatus(t("err_file_too_large_50"));
       } else if (result.reason === "system_page") {
         fileName.textContent = t("popup_unsupported");
         setStatus(t("popup_unsupported"));
@@ -163,23 +209,34 @@ langSelect.addEventListener("change", async () => {
 });
 
 // ----------------------------------------------------------
-// UPLOAD — clic sur le bouton principal
+// UPLOAD / ANNULATION — clic sur le bouton principal
 // ----------------------------------------------------------
 
 uploadBtn.addEventListener("click", async () => {
-  setLoading(true);
+  if (isUploading) {
+    // Action d'annulation
+    uploadBtn.disabled = true;
+    try {
+      await browser.runtime.sendMessage({ action: "cancelUpload" });
+    } catch (e) {
+      // Ignorer
+    }
+    return;
+  }
+
+  // Action d'envoi
+  isUploading = true;
   driveLinkRow.classList.add("hidden");
-  setStatus(t("popup_uploading_label"));
-  setAuthBadge("loading", t("popup_btn_uploading"));
+  setTransferState("downloading", 0);
 
   try {
     const response = await browser.runtime.sendMessage({ action: "uploadCurrentFile" });
 
-    setLoading(false);
+    setTransferState("idle", 0);
 
     if (response.success) {
       setAuthBadge("success", t("popup_auth_connected"));
-      setStatus(t("popup_success", { FILE_NAME: response.fileName }));
+      setStatusLive(t("popup_success", { FILE_NAME: response.fileName }));
       uploadBtn.disabled = true;
 
       if (response.link && response.link.startsWith("https://drive.google.com/")) {
@@ -188,14 +245,14 @@ uploadBtn.addEventListener("click", async () => {
       }
     } else {
       setAuthBadge("error", t("popup_auth_error"));
-      setStatus(response.error);
+      setStatusLive(response.error);
       uploadBtn.disabled = false;
     }
 
   } catch (e) {
-    setLoading(false);
+    setTransferState("idle", 0);
     setAuthBadge("error", t("popup_auth_error"));
-    setStatus(t("err_upload_failed"));
+    setStatusLive(t("err_upload_failed"));
     uploadBtn.disabled = false;
   }
 });
@@ -236,5 +293,15 @@ disconnectBtn.addEventListener("click", async () => {
   } catch (e) {
     disconnectBtn.textContent = t("popup_btn_disconnect");
     setStatus(t("err_network"));
+  }
+});
+
+// ----------------------------------------------------------
+// COMMUNICATOR PROGRESSION
+// ----------------------------------------------------------
+
+browser.runtime.onMessage.addListener((message) => {
+  if (message.action === "uploadProgress") {
+    setTransferState(message.state, message.percent);
   }
 });

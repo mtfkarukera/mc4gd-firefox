@@ -5,6 +5,19 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.7.0] — 2026-06-15
+
+### Ajouté
+- Sessions d'upload résumables de Google Drive v3, rendant les imports volumineux très robustes.
+- Augmentation de la limite de taille des fichiers capturés à 200 Mo (contre 5 Mo précédemment) pour supporter l'import de musiques et vidéos.
+- Barre de progression animée dans la popup indiquant la progression en pourcentage pour les phases de téléchargement ("downloading") et d'upload ("uploading").
+- Bouton d'annulation dynamique pour interrompre activement un transfert de fichier en cours.
+- Logique de reconnexion de la popup : fermeture et réouverture sans perturber le transfert en arrière-plan, dont le statut et la progression sont récupérés automatiquement au chargement de la popup.
+
+### Modifié
+- Récupération explicite des métadonnées du fichier créé (webViewLink) lors de l'initialisation de l'upload résumable afin de restaurer le bouton "Afficher sur Drive" à la fin du transfert.
+- Nouveaux messages de traduction localisés dans les 6 langues supportées pour les états de progression, le bouton d'annulation et les erreurs d'abandon.
+
 ## [1.6.0] — 2026-06-15
 
 ### Ajouté
