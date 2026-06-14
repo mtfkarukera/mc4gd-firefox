@@ -5,6 +5,15 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.4.0] — 2026-06-15
+
+### Ajouté
+- En-têtes de licence standard MPL-2.0 ajoutés sur tous les fichiers sources (`background.js`, `popup.js`, `utils.js`, `popup.html`, `popup.css`).
+
+### Modifié
+- Nettoyage des permissions dans `manifest.json` : suppression de la permission redondante `activeTab` (déjà couverte par `<all_urls>`).
+- Réécriture et correction complète des fichiers de politique de confidentialité (`PRIVACY.md` et `privacy.html`) afin de refléter fidèlement le fonctionnement de l'extension (utilisation du scope `drive` pour la recherche de dossier, absence de serveurs tiers, correction des références à NotebookLM).
+
 ## [1.3.0] — 2026-06-14
 
 ### Ajouté

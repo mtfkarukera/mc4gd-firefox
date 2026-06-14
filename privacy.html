@@ -1,32 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy – Magic Clipper for NotebookLM</title>
+  <title>Privacy Policy – Magic Clipper for Google Drive</title>
   <style>
     body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #333; }
-    h1 { font-size: 1.6em; }
-    h2 { font-size: 1.2em; margin-top: 2em; }
-    a { color: #0066cc; }
+    h1 { font-size: 1.6em; color: #1a0dab; }
+    h2 { font-size: 1.2em; margin-top: 2em; color: #3c4043; }
+    a { color: #1a73e8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #f1f3f4; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
   </style>
 </head>
 <body>
-  <h1>Privacy Policy – Magic Clipper for NotebookLM</h1>
-  <p><em>Last updated: May 2026</em></p>
+  <h1>Privacy Policy – Magic Clipper for Google Drive</h1>
+  <p><em>Last updated: June 2026</em></p>
 
-  <h2>1. Data collected</h2>
-  <p>Magic Clipper for NotebookLM does not collect, store, or transmit any personal data to third-party servers. All processing occurs locally in your browser.</p>
+  <h2>1. No Data Collection</h2>
+  <p>Magic Clipper for Google Drive does not collect, track, store, or transmit any personal data or browsing activity to external or third-party servers. All processing and request execution occur locally within your browser.</p>
 
-  <h2>2. Google Drive access</h2>
-  <p>When you use the Google Drive import feature, the extension requests OAuth 2.0 access limited to the <code>drive.file</code> scope, which only allows access to files you explicitly select. No file content is stored outside your browser session.</p>
+  <h2>2. Google Drive Access & Scope Justification</h2>
+  <p>The extension requests OAuth 2.0 access to your Google Drive via the full <code>https://www.googleapis.com/auth/drive</code> scope. This permission is used solely to find or create the folder named <code>"Imports Magic Clipper"</code> and upload your selected files to it.</p>
+  <p><strong>Why is the full scope needed?</strong> The full <code>drive</code> scope is required to search for pre-existing folders created during previous sessions or on other devices. The narrower <code>drive.file</code> scope is insufficient because it only permits the extension to view files/folders that it created during the current session, which would result in creating duplicate import folders. We do not read, edit, or delete any of your other Google Drive files.</p>
 
-  <h2>3. Cookies and tracking</h2>
-  <p>This extension does not use cookies or any tracking technology.</p>
+  <h2>3. Local Storage</h2>
+  <p>Your OAuth2 access token, expiration timestamps, cached Google Drive folder ID, and manual language preferences are stored locally on your device via <code>browser.storage.local</code>. This data never leaves your device except when authenticating directly with Google APIs.</p>
 
-  <h2>4. Contact</h2>
-  <p>For any questions regarding this privacy policy, contact the developer via the project repository:<br>
-    <a href="https://github.com/mtfkarukera/notebooklm-magic-clipper">github.com/mtfkarukera/notebooklm-magic-clipper</a>
+  <h2>4. Cookies and Tracking</h2>
+  <p>This extension does not use cookies, analytics, or any tracking tools.</p>
+
+  <h2>5. Contact & Open Source</h2>
+  <p>This extension is fully open source. You can audit the code and report any issues or privacy concerns on our GitHub repository:<br>
+    <a href="https://github.com/mtfkarukera/magic-clipper-drive" target="_blank" rel="noopener noreferrer">https://github.com/mtfkarukera/magic-clipper-drive</a>
   </p>
 </body>
 </html>
