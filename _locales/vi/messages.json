@@ -38,5 +38,9 @@
   "err_upload_failed": { "message": "Tải lên không thành công. Vui lòng thử lại.", "description": "Error: upload failed" },
   "lang_select_label": {
     "message": "Ngôn ngữ"
+  },
+  "err_private_network": {
+    "message": "Không thể xử lý địa chỉ mạng nội bộ hoặc riêng tư.",
+    "description": "Error: private network SSRF blocked"
   }
 }

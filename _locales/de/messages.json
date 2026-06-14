@@ -38,5 +38,9 @@
   "err_upload_failed": { "message": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut.", "description": "Error: upload failed" },
   "lang_select_label": {
     "message": "Sprache"
+  },
+  "err_private_network": {
+    "message": "Private oder lokale Netzwerkadressen können nicht verarbeitet werden.",
+    "description": "Error: private network SSRF blocked"
   }
 }

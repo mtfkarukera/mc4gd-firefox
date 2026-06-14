@@ -78,6 +78,61 @@ async function getValidToken() {
   return getAccessToken(true);
 }
 
+/**
+ * Vérifie si l'URL pointe vers une adresse IP loopback, privée ou de réseau local (SSRF).
+ * @param {string} urlStr — L'URL à valider
+ * @returns {boolean} true si l'adresse est privée, loopback ou locale
+ */
+function isPrivateOrLoopback(urlStr) {
+  try {
+    const url = new URL(urlStr);
+    const hostname = url.hostname.toLowerCase();
+
+    // 1. Noms d'hôtes locaux/boucle de retour
+    if (hostname === "localhost" || hostname.endsWith(".local") || hostname.endsWith(".localhost")) {
+      return true;
+    }
+
+    // 2. IPv6 (enclos d'une URL : [::1])
+    if (hostname.startsWith("[") && hostname.endsWith("]")) {
+      const ipv6 = hostname.slice(1, -1);
+      if (ipv6 === "::1" || ipv6 === "0:0:0:0:0:0:0:1") return true;
+      // Link-local fe80::/10
+      if (ipv6.startsWith("fe8") || ipv6.startsWith("fe9") || ipv6.startsWith("fea") || ipv6.startsWith("feb")) return true;
+      // Unique Local Address fc00::/7
+      if (ipv6.startsWith("fc") || ipv6.startsWith("fd")) return true;
+      return false;
+    }
+
+    // 3. IPv4 (dotted decimal normalisé par new URL)
+    const parts = hostname.split(".");
+    if (parts.length === 4) {
+      const p0 = parseInt(parts[0], 10);
+      const p1 = parseInt(parts[1], 10);
+
+      if (isNaN(p0) || isNaN(p1)) return false;
+
+      // 127.0.0.0/8 (Loopback)
+      if (p0 === 127) return true;
+      // 10.0.0.0/8 (Private network)
+      if (p0 === 10) return true;
+      // 172.16.0.0/12 (Private network)
+      if (p0 === 172 && p1 >= 16 && p1 <= 31) return true;
+      // 192.168.0.0/16 (Private network)
+      if (p0 === 192 && p1 === 168) return true;
+      // 169.254.0.0/16 (Link-local, ex: metadata cloud provider)
+      if (p0 === 169 && p1 === 254) return true;
+      // 0.0.0.0/8 (Broadcast/Current network)
+      if (p0 === 0) return true;
+    }
+
+    return false;
+  } catch (e) {
+    // Si URL non valide, on rejette par sécurité
+    return true;
+  }
+}
+
 // ----------------------------------------------------------
 // DÉTECTION DU FORMAT DE FICHIER
 // ----------------------------------------------------------
@@ -98,6 +153,11 @@ async function detectFileFromTab(tab) {
   // Blocage fichiers locaux — définitif
   if (url.startsWith("file://")) {
     return { supported: false, reason: "local_file" };
+  }
+
+  // Blocage adresses privées / loopback (SSRF)
+  if (isPrivateOrLoopback(url)) {
+    return { supported: false, reason: "private_network" };
   }
 
   // Blocage pages système (about:, moz-extension:, etc.)
@@ -231,6 +291,9 @@ async function getOrCreateFolder(token) {
  * @returns {Promise<{id, name, webViewLink}>}
  */
 async function uploadFile(url, fileName, mimeType, token, folderId) {
+  if (isPrivateOrLoopback(url)) {
+    throw new Error("PRIVATE_NETWORK");
+  }
   // Téléchargement du fichier depuis l'URL de l'onglet
   const fileResponse = await fetch(url);
   if (!fileResponse.ok) {
@@ -313,7 +376,13 @@ async function disconnect() {
   const { accessToken } = await browser.storage.local.get("accessToken");
   if (accessToken) {
     // Révocation best-effort — ne pas bloquer sur l'erreur
-    await fetch(`https://accounts.google.com/o/oauth2/revoke?token=${accessToken}`).catch(() => {});
+    await fetch("https://oauth2.googleapis.com/revoke", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `token=${encodeURIComponent(accessToken)}`
+    }).catch(() => {});
   }
   await browser.storage.local.remove(["accessToken", "expiresAt", "folderId"]);
 }
@@ -355,7 +424,9 @@ async function handleMessage(message) {
         // Détection du format
         const detection = await detectFileFromTab(tab);
         if (!detection.supported) {
-          const errorKey = detection.reason === "local_file" ? "err_local_file" : "err_unsupported_type";
+          let errorKey = "err_unsupported_type";
+          if (detection.reason === "local_file") errorKey = "err_local_file";
+          if (detection.reason === "private_network") errorKey = "err_private_network";
           return { success: false, error: t(errorKey) };
         }
 
@@ -397,6 +468,9 @@ async function handleMessage(message) {
 // ----------------------------------------------------------
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.id !== browser.runtime.id) {
+    return;
+  }
   (async () => {
     const result = await handleMessage(message);
     sendResponse(result);

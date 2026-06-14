@@ -82,5 +82,11 @@
   },
   "lang_select_label": {
     "message": "Lang"
+  },
+  "err_private_network": {
+    "message": "Adres rézo privé oben lokal pa pé trété."
+  },
+  "popup_btn_disconnect_confirm": {
+    "message": "Konfimé délyannaj"
   }
 }

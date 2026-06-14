@@ -37,6 +37,11 @@ export async function initI18n(forcedLocale = null) {
     locale = browser.i18n.getUILanguage().split('-')[0];
   }
 
+  const allowedLocales = ["en", "fr", "de", "es", "vi", "gcf"];
+  if (!allowedLocales.includes(locale)) {
+    locale = "en";
+  }
+
   if (locale === 'en') {
     messages = fallbackMessages;
     return;
@@ -75,7 +80,8 @@ export function getFileNameFromUrl(url, title) {
     if (lastPart && lastPart.includes('.')) {
       const ext = lastPart.split('.').pop().toLowerCase();
       if (MIME_MAP[ext]) {
-        return decodeURIComponent(lastPart);
+        const decoded = decodeURIComponent(lastPart);
+        return decoded.replace(/[<>:"/\\|?*]/g, '_');
       }
     }
   } catch (e) {

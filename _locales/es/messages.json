@@ -38,5 +38,9 @@
   "err_upload_failed": { "message": "Error en la carga. Inténtalo de nuevo.", "description": "Error: upload failed" },
   "lang_select_label": {
     "message": "Idioma"
+  },
+  "err_private_network": {
+    "message": "Las direcciones de red privadas o locales no se pueden procesar.",
+    "description": "Error: private network SSRF blocked"
   }
 }

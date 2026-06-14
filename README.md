@@ -94,18 +94,7 @@ L'architecture sépare strictement l'UI (popup) et la logique (background) :
 
 ## 📋 Changelog
 
-### v1.1.0
-- feat: sélecteur de langue Kréyòl (gcf) dans le popup
-- Persistance du choix via browser.storage.local
-- Thème sombre natif déjà en place (zéro JS)
-
-### v1.0.2 — 2026-05-17
-- fix: restauration de `<all_urls>` dans `host_permissions`
-- fix: correction des chemins d'import de `utils.js`
-
-### v1.0.1 — 2026-05-17
-- fix: suppression de `"persistent": false` dans `background` (propriété MV2-only)
-- fix: suppression du bloc `"oauth2"` (propriété Chromium-only, génère un warning Firefox au runtime)
+Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 
 ---
 

@@ -110,6 +110,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (result.reason === "local_file") {
         fileName.textContent = t("popup_local_file");
         setStatus(t("err_local_file"));
+      } else if (result.reason === "private_network") {
+        fileName.textContent = t("popup_unsupported");
+        setStatus(t("err_private_network"));
       } else if (result.reason === "system_page") {
         fileName.textContent = t("popup_unsupported");
         setStatus(t("popup_unsupported"));
@@ -160,7 +163,7 @@ uploadBtn.addEventListener("click", async () => {
       setStatus(t("popup_success", { FILE_NAME: response.fileName }));
       uploadBtn.disabled = true;
 
-      if (response.link) {
+      if (response.link && response.link.startsWith("https://drive.google.com/")) {
         driveLink.href = response.link;
         driveLinkRow.classList.remove("hidden");
       }
