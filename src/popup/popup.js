@@ -113,6 +113,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else if (result.reason === "private_network") {
         fileName.textContent = t("popup_unsupported");
         setStatus(t("err_private_network"));
+      } else if (result.reason === "file_too_large") {
+        fileName.textContent = t("popup_unsupported");
+        setStatus(t("err_file_too_large"));
       } else if (result.reason === "system_page") {
         fileName.textContent = t("popup_unsupported");
         setStatus(t("popup_unsupported"));

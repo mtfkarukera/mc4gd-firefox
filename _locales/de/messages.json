@@ -42,5 +42,21 @@
   "err_private_network": {
     "message": "Private oder lokale Netzwerkadressen können nicht verarbeitet werden.",
     "description": "Error: private network SSRF blocked"
+  },
+  "err_file_too_large": {
+    "message": "Die Datei ist zu groß (die maximale Größe beträgt 5 MB).",
+    "description": "Error: file exceeds 5MB limit"
+  },
+  "err_timeout": {
+    "message": "Zeitüberschreitung der Anforderung. Bitte versuchen Sie es erneut.",
+    "description": "Error: request timeout"
+  },
+  "err_rate_limit": {
+    "message": "Zu viele Anforderungen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+    "description": "Error: google api rate limit"
+  },
+  "err_google_server": {
+    "message": "Google Drive-Serverfehler. Bitte versuchen Sie es später noch einmal.",
+    "description": "Error: google server down"
   }
 }

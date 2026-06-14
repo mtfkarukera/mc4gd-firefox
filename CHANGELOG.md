@@ -5,6 +5,18 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.3.0] — 2026-06-14
+
+### Ajouté
+- Garde-fou limitant la taille des fichiers capturés à 5 Mo maximum (upload multipart).
+- Pré-vérification de taille proactive via l'analyse de l'en-tête `Content-Length` (requête HEAD).
+- Expiration automatique des requêtes (timeout de 15 secondes) avec `AbortController`.
+- Tentatives automatiques (retries) avec backoff exponentiel (jusqu'à 3 essais) sur les timeouts, les codes d'erreur 429 et 5xx de Google.
+- Verrouillage asynchrone (Mutex) évitant la double création concurrente du dossier parent sur Drive.
+- Traduction de l'erreur réseau (`err_network`) rendue plus robuste.
+- Analyse détaillée des messages d'erreur de Google Drive pour remonter des raisons d'erreur ciblées (quota, limitations, panne).
+- Nouveaux messages d'erreur localisés : `err_file_too_large`, `err_timeout`, `err_rate_limit`, `err_google_server`.
+
 ## [1.2.0] — 2026-06-14
 
 ### Sécurité

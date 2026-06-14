@@ -42,5 +42,21 @@
   "err_private_network": {
     "message": "Không thể xử lý địa chỉ mạng nội bộ hoặc riêng tư.",
     "description": "Error: private network SSRF blocked"
+  },
+  "err_file_too_large": {
+    "message": "Tệp quá lớn (kích thước tối đa là 5 MB).",
+    "description": "Error: file exceeds 5MB limit"
+  },
+  "err_timeout": {
+    "message": "Yêu cầu đã hết thời gian. Vui lòng thử lại.",
+    "description": "Error: request timeout"
+  },
+  "err_rate_limit": {
+    "message": "Quá nhiều yêu cầu. Vui lòng đợi một lát và thử lại.",
+    "description": "Error: google api rate limit"
+  },
+  "err_google_server": {
+    "message": "Lỗi máy chủ Google Drive. Vui lòng thử lại sau.",
+    "description": "Error: google server down"
   }
 }

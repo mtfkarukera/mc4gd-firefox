@@ -88,5 +88,17 @@
   },
   "popup_btn_disconnect_confirm": {
     "message": "Konfimé délyannaj"
+  },
+  "err_file_too_large": {
+    "message": "Fichyé-la twò gwo (maksimòm sé 5 Mo)."
+  },
+  "err_timeout": {
+    "message": "Tan-la fin. Éséyé ankò souplé."
+  },
+  "err_rate_limit": {
+    "message": "Twòp mèsaj voyé. Tann on ti moman é éséyé ankò."
+  },
+  "err_google_server": {
+    "message": "Pwoblèm sèvè Google Drive. Éséyé plita souplé."
   }
 }

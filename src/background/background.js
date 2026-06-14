@@ -18,6 +18,12 @@ const MIME_TO_EXT = Object.fromEntries(
 );
 
 // ----------------------------------------------------------
+// MUTEX DE CRÉATION DE DOSSIER
+// ----------------------------------------------------------
+
+let folderCreationPromise = null;
+
+// ----------------------------------------------------------
 // INITIALISATION i18n
 // ----------------------------------------------------------
 
@@ -133,6 +139,84 @@ function isPrivateOrLoopback(urlStr) {
   }
 }
 
+/**
+ * Effectue un fetch avec une expiration (timeout).
+ * @param {string} url - L'URL à requêter
+ * @param {Object} options - Options fetch
+ * @param {number} timeoutMs - Délai d'expiration en ms
+ */
+async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const { signal } = controller;
+
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      throw new Error("TIMEOUT");
+    }
+    throw error;
+  }
+}
+
+/**
+ * Effectue une requête vers l'API Google Drive avec retries sur les codes d'erreur temporaires et le timeout.
+ */
+async function fetchDriveWithRetry(url, options = {}, retries = 3, delay = 1000) {
+  try {
+    const res = await fetchWithTimeout(url, options);
+    if (!res.ok) {
+      const status = res.status;
+      // Codes réessayables : rate limits (429) et erreurs serveur (5xx)
+      if ((status === 429 || (status >= 500 && status < 600)) && retries > 0) {
+        console.warn(`Drive API returned ${status}. Retrying in ${delay}ms... (Remaining retries: ${retries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchDriveWithRetry(url, options, retries - 1, delay * 2);
+      }
+    }
+    return res;
+  } catch (error) {
+    if (error.message === "TIMEOUT" && retries > 0) {
+      console.warn(`Drive API request timed out. Retrying in ${delay}ms... (Remaining retries: ${retries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchDriveWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Analyse une réponse d'erreur de l'API Drive pour lancer une exception typée.
+ */
+async function parseAndThrowDriveError(res) {
+  const status = res.status;
+  let reason = `HTTP_${status}`;
+  try {
+    const err = await res.json();
+    const firstError = err.error?.errors?.[0];
+    if (firstError) {
+      reason = firstError.reason || firstError.message || reason;
+    } else if (err.error?.message) {
+      reason = err.error.message;
+    }
+  } catch (e) {
+    // Échec de parsing
+  }
+
+  if (reason === "storageQuotaExceeded") {
+    throw new Error("QUOTA_EXCEEDED");
+  }
+  if (reason === "rateLimitExceeded" || reason === "userRateLimitExceeded") {
+    throw new Error("RATE_LIMIT_EXCEEDED");
+  }
+  throw new Error(reason);
+}
+
 // ----------------------------------------------------------
 // DÉTECTION DU FORMAT DE FICHIER
 // ----------------------------------------------------------
@@ -183,8 +267,17 @@ async function detectFileFromTab(tab) {
 
   // --- Étape 2 : HEAD request fallback ---
   try {
-    const headRes = await fetch(url, { method: "HEAD" });
+    const headRes = await fetchWithTimeout(url, { method: "HEAD" });
     if (headRes.ok) {
+      // Vérifier la taille avant tout
+      const contentLengthHeader = headRes.headers.get("Content-Length");
+      if (contentLengthHeader) {
+        const size = parseInt(contentLengthHeader, 10);
+        if (!isNaN(size) && size > 5 * 1024 * 1024) {
+          return { supported: false, reason: "file_too_large" };
+        }
+      }
+
       const contentType = (headRes.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
       if (contentType && MIME_TO_EXT[contentType]) {
         const ext = MIME_TO_EXT[contentType];
@@ -218,26 +311,29 @@ async function findFolder(token) {
     "https://www.googleapis.com/drive/v3/files" +
     "?q=" + encodeURIComponent(q) +
     "&orderBy=createdTime+desc" +
+    "&pageSize=1" +
     "&fields=files(id,name)";
 
-  const res = await fetch(url, {
+  const res = await fetchDriveWithRetry(url, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
   if (!res.ok) {
-    throw new Error(`Recherche dossier Drive échouée (HTTP ${res.status})`);
+    const status = res.status;
+    if (status === 401) throw new Error("RETRY_401");
+    if (status === 403) {
+      await parseAndThrowDriveError(res);
+    }
+    if (status >= 500) throw new Error("GOOGLE_SERVER_ERROR");
+    throw new Error(`DRIVE_API_ERROR_HTTP_${status}`);
   }
 
   const data = await res.json();
   return data.files?.[0]?.id ?? null;
 }
 
-/**
- * Crée le dossier "Imports Magic Clipper" à la racine du Drive.
- * @returns {Promise<string>} L'ID du dossier créé
- */
 async function createFolder(token) {
-  const res = await fetch("https://www.googleapis.com/drive/v3/files", {
+  const res = await fetchDriveWithRetry("https://www.googleapis.com/drive/v3/files", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -249,31 +345,46 @@ async function createFolder(token) {
     })
   });
 
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401) throw new Error("RETRY_401");
+    if (status === 403) {
+      await parseAndThrowDriveError(res);
+    }
+    if (status >= 500) throw new Error("GOOGLE_SERVER_ERROR");
+    throw new Error(`DRIVE_API_ERROR_HTTP_${status}`);
+  }
+
   const data = await res.json();
   if (!data.id) {
-    throw new Error("Création du dossier Drive échouée.");
+    throw new Error("CREATE_FOLDER_FAILED");
   }
   await browser.storage.local.set({ folderId: data.id });
   return data.id;
 }
 
-/**
- * Orchestrateur : cache → findFolder → createFolder.
- */
 async function getOrCreateFolder(token) {
-  // Vérifier le cache d'abord
+  if (folderCreationPromise) {
+    await folderCreationPromise;
+  }
+
   const { folderId } = await browser.storage.local.get("folderId");
   if (folderId) return folderId;
 
-  // Rechercher en ligne
-  const found = await findFolder(token);
-  if (found) {
-    await browser.storage.local.set({ folderId: found });
-    return found;
-  }
+  folderCreationPromise = (async () => {
+    const found = await findFolder(token);
+    if (found) {
+      await browser.storage.local.set({ folderId: found });
+      return found;
+    }
+    return createFolder(token);
+  })();
 
-  // Créer uniquement si introuvable
-  return createFolder(token);
+  try {
+    return await folderCreationPromise;
+  } finally {
+    folderCreationPromise = null;
+  }
 }
 
 // ----------------------------------------------------------
@@ -294,12 +405,17 @@ async function uploadFile(url, fileName, mimeType, token, folderId) {
   if (isPrivateOrLoopback(url)) {
     throw new Error("PRIVATE_NETWORK");
   }
-  // Téléchargement du fichier depuis l'URL de l'onglet
-  const fileResponse = await fetch(url);
+  // Téléchargement du fichier depuis l'URL de l'onglet (timeout 15s)
+  const fileResponse = await fetchWithTimeout(url);
   if (!fileResponse.ok) {
-    throw new Error(`HTTP_${fileResponse.status}`);
+    throw new Error(`DOWNLOAD_FAILED_HTTP_${fileResponse.status}`);
   }
   const fileBlob = await fileResponse.blob();
+
+  // Garde-fou 5 Mo
+  if (fileBlob.size > 5 * 1024 * 1024) {
+    throw new Error("FILE_TOO_LARGE");
+  }
 
   // Metadata Drive
   const metadata = {
@@ -313,8 +429,8 @@ async function uploadFile(url, fileName, mimeType, token, folderId) {
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append("file", fileBlob);
 
-  // Upload
-  const uploadRes = await fetch(
+  // Upload (avec retries sur 429/5xx/timeout)
+  const uploadRes = await fetchDriveWithRetry(
     "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",
     {
       method: "POST",
@@ -327,9 +443,9 @@ async function uploadFile(url, fileName, mimeType, token, folderId) {
     const status = uploadRes.status;
     if (status === 401) throw new Error("RETRY_401");
     if (status === 404) throw new Error("RETRY_404");
-    if (status === 403) throw new Error("QUOTA_EXCEEDED");
-    const err = await uploadRes.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP_${status}`);
+    
+    // Parse Google's detailed error
+    await parseAndThrowDriveError(uploadRes);
   }
 
   return uploadRes.json();
@@ -427,6 +543,7 @@ async function handleMessage(message) {
           let errorKey = "err_unsupported_type";
           if (detection.reason === "local_file") errorKey = "err_local_file";
           if (detection.reason === "private_network") errorKey = "err_private_network";
+          if (detection.reason === "file_too_large") errorKey = "err_file_too_large";
           return { success: false, error: t(errorKey) };
         }
 
@@ -436,18 +553,30 @@ async function handleMessage(message) {
         return { success: true, fileName: result.name, link: result.webViewLink };
       } catch (e) {
         // Messages d'erreur i18n selon le type
+        if (e.message === "FILE_TOO_LARGE") {
+          return { success: false, error: t("err_file_too_large") };
+        }
+        if (e.message === "TIMEOUT") {
+          return { success: false, error: t("err_timeout") };
+        }
+        if (e.message === "RATE_LIMIT_EXCEEDED") {
+          return { success: false, error: t("err_rate_limit") };
+        }
+        if (e.message === "GOOGLE_SERVER_ERROR") {
+          return { success: false, error: t("err_google_server") };
+        }
         if (e.message === "QUOTA_EXCEEDED") {
           return { success: false, error: t("err_quota") };
         }
-        if (e.message?.startsWith("HTTP_")) {
-          const status = e.message.replace("HTTP_", "");
+        if (e.message?.startsWith("DOWNLOAD_FAILED_HTTP_")) {
+          const status = e.message.replace("DOWNLOAD_FAILED_HTTP_", "");
           return { success: false, error: t("err_download_failed", { STATUS: status }) };
         }
         if (e.message?.includes("auth") || e.message?.includes("identity")) {
           return { success: false, error: t("err_auth_failed") };
         }
         // Erreur réseau (fetch échoue sans status)
-        if (e.name === "TypeError" && e.message?.includes("fetch")) {
+        if (e.name === "TypeError") {
           return { success: false, error: t("err_network") };
         }
         return { success: false, error: t("err_upload_failed") };
