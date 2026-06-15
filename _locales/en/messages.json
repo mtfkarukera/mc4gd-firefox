@@ -42,10 +42,6 @@
     "message": "Private or local network addresses cannot be processed.",
     "description": "Error: private network SSRF blocked"
   },
-  "err_file_too_large": {
-    "message": "The file is too large (maximum size is 5 MB).",
-    "description": "Error: file exceeds 5MB limit"
-  },
   "err_timeout": {
     "message": "The request timed out. Please try again.",
     "description": "Error: request timeout"
@@ -87,6 +83,10 @@
   "popup_btn_cancel": {
     "message": "❌ Cancel",
     "description": "Cancel button text"
+  },
+  "progress_label": {
+    "message": "Upload progress",
+    "description": "Aria label for the upload progress bar"
   },
   "err_upload_aborted": {
     "message": "Upload cancelled.",

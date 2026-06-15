@@ -15,6 +15,7 @@ import { FOLDER_NAME, MIME_MAP, initI18n, t, getFileNameFromUrl } from "../share
 
 const CLIENT_ID = "270035285728-p7ssnc4jqitu5d12j5kuouinirf7vfnf.apps.googleusercontent.com";
 const SCOPES    = "https://www.googleapis.com/auth/drive";
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 Mo
 
 // Table inversée : mimeType → extension (pour HEAD fallback)
 const MIME_TO_EXT = Object.fromEntries(
@@ -61,6 +62,10 @@ async function getAccessToken(interactive = true) {
     });
     const params = new URLSearchParams(new URL(responseURL).hash.slice(1));
     const token = params.get("access_token");
+    if (!token) {
+      if (!interactive) return null;
+      throw new Error("AUTH_NO_TOKEN");
+    }
     const expiresIn = parseInt(params.get("expires_in")) || 3600;
     const expiresAt = Date.now() + expiresIn * 1000;
 
@@ -280,7 +285,7 @@ async function detectFileFromTab(tab) {
       const contentLengthHeader = headRes.headers.get("Content-Length");
       if (contentLengthHeader) {
         const size = parseInt(contentLengthHeader, 10);
-        if (!isNaN(size) && size > 200 * 1024 * 1024) {
+        if (!isNaN(size) && size > MAX_FILE_SIZE) {
           return { supported: false, reason: "file_too_large" };
         }
       }
@@ -405,6 +410,9 @@ async function downloadFileWithProgress(url, tabId, uploadState) {
   const controller = new AbortController();
   uploadState.controller = controller;
 
+  // Auto-timeout for stalled downloads (120s)
+  const downloadTimeout = setTimeout(() => controller.abort(), 120_000);
+
   const res = await fetch(url, { signal: controller.signal });
   if (!res.ok) {
     throw new Error(`DOWNLOAD_FAILED_HTTP_${res.status}`);
@@ -413,7 +421,7 @@ async function downloadFileWithProgress(url, tabId, uploadState) {
   const contentLengthHeader = res.headers.get("Content-Length");
   const totalSize = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
 
-  if (totalSize > 200 * 1024 * 1024) {
+  if (totalSize > MAX_FILE_SIZE) {
     throw new Error("FILE_TOO_LARGE");
   }
 
@@ -428,7 +436,7 @@ async function downloadFileWithProgress(url, tabId, uploadState) {
     chunks.push(value);
     receivedLength += value.length;
 
-    if (receivedLength > 200 * 1024 * 1024) {
+    if (receivedLength > MAX_FILE_SIZE) {
       throw new Error("FILE_TOO_LARGE");
     }
 
@@ -443,6 +451,7 @@ async function downloadFileWithProgress(url, tabId, uploadState) {
     }).catch(() => {});
   }
 
+  clearTimeout(downloadTimeout);
   return new Blob(chunks);
 }
 
@@ -496,6 +505,7 @@ async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId
 
   const uploadPromise = new Promise((resolve, reject) => {
     xhr.open("PUT", sessionUrl);
+    xhr.timeout = 300_000; // 5 minutes
     xhr.setRequestHeader("Content-Type", mimeType);
 
     xhr.upload.addEventListener("progress", (event) => {
@@ -529,6 +539,7 @@ async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId
 
     xhr.onerror = () => reject(new Error("UPLOAD_NETWORK_ERROR"));
     xhr.onabort = () => reject(new Error("ABORTED"));
+    xhr.ontimeout = () => reject(new Error("TIMEOUT"));
   });
 
   xhr.send(fileBlob);
@@ -782,4 +793,23 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse(result);
   })();
   return true; // ← OBLIGATOIRE — maintient le canal ouvert
+});
+
+// ----------------------------------------------------------
+// NETTOYAGE AUTOMATIQUE — ONGLET FERMÉ
+// ----------------------------------------------------------
+
+browser.tabs.onRemoved.addListener((tabId) => {
+  const uploadState = activeUploads[tabId];
+  if (!uploadState) return;
+
+  // Abort active download
+  if (uploadState.controller) {
+    uploadState.controller.abort();
+  }
+  // Abort active upload XHR
+  if (uploadState.xhr) {
+    uploadState.xhr.abort();
+  }
+  delete activeUploads[tabId];
 });

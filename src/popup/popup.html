@@ -17,7 +17,7 @@
       <img class="logo-icon" src="../../icons/icon.svg" alt="Logo" aria-hidden="true" />
       <span data-i18n="ext_name"></span>
     </div>
-    <div id="auth-status" class="status-badge status-loading" data-i18n="popup_auth_loading"></div>
+    <div id="auth-status" class="status-badge status-loading" data-i18n="popup_auth_loading" aria-live="polite"></div>
     <select id="lang-select" data-i18n-aria-label="lang_select_label">
       <option value="auto">Auto</option>
       <option value="gcf">Kréyòl</option>
@@ -40,7 +40,7 @@
       <span id="btn-spinner" class="spinner hidden" aria-hidden="true"></span>
     </button>
     <div id="progress-container" class="progress-container hidden">
-      <div id="progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      <div id="progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-i18n-aria-label="progress_label"></div>
     </div>
     <div id="drive-link-row" class="drive-link-row hidden">
       <a id="drive-link" href="#" target="_blank" rel="noopener noreferrer" data-i18n="popup_link_view"></a>
@@ -54,10 +54,10 @@
   </footer>
 
   <!-- ONBOARDING OVERLAY -->
-  <div id="onboarding-overlay" class="onboarding-overlay hidden">
+  <div id="onboarding-overlay" class="onboarding-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
     <div class="onboarding-card">
       <img class="onboarding-logo" src="../../icons/icon.svg" alt="Logo" aria-hidden="true" />
-      <h1 data-i18n="onboarding_title"></h1>
+      <h1 id="onboarding-title" data-i18n="onboarding_title"></h1>
       <p data-i18n="onboarding_description"></p>
       <button id="onboarding-btn" class="btn primary-btn" data-i18n="onboarding_btn_ok"></button>
     </div>

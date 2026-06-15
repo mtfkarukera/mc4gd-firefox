@@ -5,6 +5,25 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.8.0] — 2026-06-15
+
+### Ajouté
+- Timeout de 120 secondes sur le téléchargement du document d'origine (`fetch`) avec gestion de l'annulation (`AbortController`).
+- Timeout de 5 minutes sur le téléversement de la session résumable Google Drive v3 via `xhr.timeout = 300000` et rejet en cas de dépassement.
+- Garde-fou lors de l'authentification OAuth2 si le paramètre `access_token` retourné est nul ou manquant.
+- Écouteur sur `browser.tabs.onRemoved` pour nettoyer et libérer les sessions de téléchargement et d'upload si l'onglet associé est fermé par l'utilisateur.
+- Attribut `aria-live="polite"` sur le badge d'authentification pour signaler de manière audible ses changements d'états aux lecteurs d'écran.
+- Attribut `data-i18n-aria-label="progress_label"` sur la barre de progression pour lui associer une étiquette textuelle descriptive traduite, et ajout de la clé correspondante dans les 6 dictionnaires de langues.
+- Rôle sémantique d'accessibilité `dialog` avec `aria-modal="true"` et `aria-labelledby="onboarding-title"` sur la superposition d'onboarding, et mécanisme de capture automatique du focus sur le bouton de fermeture lors de son affichage.
+
+### Modifié
+- Harmonisation du style des focus interactifs en remplaçant `:focus` par `:focus-visible` sur le sélecteur de langue et l'ensemble des boutons de la popup.
+- Amélioration de la gestion du focus après un upload réussi en forçant automatiquement le focus sur le lien du fichier Drive.
+- Correction du contraste du texte d'avertissement en mode sombre pour respecter le niveau de conformité WCAG AA (passage du orange `#e65100` au orange vif `#d84315`).
+- Désactivation automatique de l'animation de rotation continue du spinner de chargement si l'utilisateur a configuré une préférence pour les mouvements réduits (`prefers-reduced-motion: reduce`).
+- Nettoyage du code : factorisation de la mise à jour dynamique du statut dans `setStatusLive()` (fusion de `setStatus()`) et suppression de la clé de traduction obsolète `err_file_too_large` dans les 6 dictionnaires de langue.
+- Alignement et mise à jour de la documentation technique : correction de l'arborescence et des limites de tailles dans `ARCHITECTURE.md` et `AGENTS.md`, et suppression des anciennes références à NotebookLM résiduelles dans le fichier `index.html`.
+
 ## [1.7.0] — 2026-06-15
 
 ### Ajouté

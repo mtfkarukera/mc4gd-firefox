@@ -36,7 +36,7 @@
 
   --warning-bg: #fff8e1;
   --warning-border: #f9a825;
-  --warning-text: #e65100;
+  --warning-text: #d84315;
 
   --spinner-border: rgba(255, 255, 255, 0.3);
   --shadow-color: rgba(0, 0, 0, 0.02);
@@ -147,6 +147,9 @@ body::after {
   body::after {
     animation: none;
   }
+  .spinner {
+    animation: none;
+  }
 }
 
 /* ----------------------------------------------------------
@@ -213,7 +216,7 @@ header, section, footer {
   cursor: pointer;
 }
 
-#lang-select:focus {
+#lang-select:focus-visible {
   outline: 1px solid var(--primary-color);
 }
 

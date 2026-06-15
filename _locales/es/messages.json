@@ -42,10 +42,6 @@
     "message": "Las direcciones de red privadas o locales no se pueden procesar.",
     "description": "Error: private network SSRF blocked"
   },
-  "err_file_too_large": {
-    "message": "El archivo es demasiado grande (el tamaño máximo es de 5 MB).",
-    "description": "Error: file exceeds 5MB limit"
-  },
   "err_timeout": {
     "message": "La solicitud ha expirado. Por favor, inténtelo de nuevo.",
     "description": "Error: request timeout"
@@ -87,6 +83,10 @@
   "popup_btn_cancel": {
     "message": "❌ Cancelar",
     "description": "Cancel button text"
+  },
+  "progress_label": {
+    "message": "Progreso de la subida",
+    "description": "Etiqueta aria de la barra de progreso"
   },
   "err_upload_aborted": {
     "message": "Carga cancelada.",

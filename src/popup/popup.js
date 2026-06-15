@@ -49,10 +49,6 @@ let isUploading = false;
 // HELPERS UI
 // ----------------------------------------------------------
 
-function setStatus(msg) {
-  statusMessage.textContent = msg;
-}
-
 // ARIA live region update
 function setStatusLive(msg) {
   statusMessage.textContent = msg;
@@ -126,6 +122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Gérer l'onboarding
   if (!stored.hasSeenWelcome) {
     onboardingOverlay.classList.remove("hidden");
+    document.getElementById("onboarding-btn").focus();
   }
 
   onboardingBtn.addEventListener("click", async () => {
@@ -149,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // État initial : détection en cours
   setAuthBadge("loading", t("popup_auth_loading"));
-  setStatus(t("popup_detecting"));
+  setStatusLive(t("popup_detecting"));
 
   try {
     // Demander au background l'état de l'onglet actif
@@ -161,7 +158,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       fileName.textContent = result.fileName;
       fileInfo.classList.remove("warning");
       setAuthBadge("success", t("popup_auth_connected"));
-      setStatus(t("popup_idle_label"));
+      setStatusLive(t("popup_idle_label"));
       uploadBtn.disabled = false;
 
     } else {
@@ -171,19 +168,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (result.reason === "local_file") {
         fileName.textContent = t("popup_local_file");
-        setStatus(t("err_local_file"));
+        setStatusLive(t("err_local_file"));
       } else if (result.reason === "private_network") {
         fileName.textContent = t("popup_unsupported");
-        setStatus(t("err_private_network"));
+        setStatusLive(t("err_private_network"));
       } else if (result.reason === "file_too_large") {
         fileName.textContent = t("popup_unsupported");
-        setStatus(t("err_file_too_large_50"));
+        setStatusLive(t("err_file_too_large_50"));
       } else if (result.reason === "system_page") {
         fileName.textContent = t("popup_unsupported");
-        setStatus(t("popup_unsupported"));
+        setStatusLive(t("popup_unsupported"));
       } else {
         fileName.textContent = t("popup_no_file");
-        setStatus(t("popup_unsupported"));
+        setStatusLive(t("popup_unsupported"));
       }
 
       setAuthBadge("error", t("popup_auth_error"));
@@ -193,7 +190,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     fileInfo.classList.add("warning");
     fileName.textContent = t("popup_no_file");
     setAuthBadge("error", t("popup_auth_error"));
-    setStatus(t("err_network"));
+    setStatusLive(t("err_network"));
   }
 });
 
@@ -242,6 +239,7 @@ uploadBtn.addEventListener("click", async () => {
       if (response.link && response.link.startsWith("https://drive.google.com/")) {
         driveLink.href = response.link;
         driveLinkRow.classList.remove("hidden");
+        driveLink.focus();
       }
     } else {
       setAuthBadge("error", t("popup_auth_error"));
@@ -287,12 +285,12 @@ disconnectBtn.addEventListener("click", async () => {
     await browser.runtime.sendMessage({ action: "disconnect" });
     disconnectBtn.textContent = t("popup_btn_disconnect");
     setAuthBadge("loading", t("popup_auth_loading"));
-    setStatus(t("popup_auth_loading"));
+    setStatusLive(t("popup_auth_loading"));
     driveLinkRow.classList.add("hidden");
     uploadBtn.disabled = true;
   } catch (e) {
     disconnectBtn.textContent = t("popup_btn_disconnect");
-    setStatus(t("err_network"));
+    setStatusLive(t("err_network"));
   }
 });
 

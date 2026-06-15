@@ -83,9 +83,6 @@
   "popup_btn_disconnect_confirm": {
     "message": "Konfimé délyannaj"
   },
-  "err_file_too_large": {
-    "message": "Fichyé-la twò gwo (maksimòm sé 5 Mo)."
-  },
   "err_timeout": {
     "message": "Tan-la fin. Éséyé ankò souplé."
   },
@@ -118,6 +115,10 @@
   },
   "popup_btn_cancel": {
     "message": "❌ Annilé"
+  },
+  "progress_label": {
+    "message": "Pwogrèsyon voyaj-la",
+    "description": "Label aria pou ba pwogrèsyon-la"
   },
   "err_upload_aborted": {
     "message": "Voyaj-la annilé."

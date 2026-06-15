@@ -42,10 +42,6 @@
     "message": "Les adresses réseau privées ou locales ne peuvent pas être traitées.",
     "description": "Error: private network SSRF blocked"
   },
-  "err_file_too_large": {
-    "message": "Le fichier est trop volumineux (la taille maximale est de 5 Mo).",
-    "description": "Error: file exceeds 5MB limit"
-  },
   "err_timeout": {
     "message": "La requête a expiré. Veuillez réessayer.",
     "description": "Error: request timeout"
@@ -87,6 +83,10 @@
   "popup_btn_cancel": {
     "message": "❌ Annuler",
     "description": "Cancel button text"
+  },
+  "progress_label": {
+    "message": "Progression de l'envoi",
+    "description": "Libellé aria de la barre de progression"
   },
   "err_upload_aborted": {
     "message": "Envoi annulé.",
