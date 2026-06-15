@@ -18,8 +18,8 @@ The OAuth2 access token, token expiration timestamp, the cached Google Drive fol
 
 ## 5. Open Source
 This extension is fully open source under the Mozilla Public License 2.0 (MPL-2.0). The complete source code can be reviewed at:
-https://github.com/mtfkarukera/magic-clipper-drive
+https://github.com/mtfkarukera/mc4gd-firefox
 
 ## 6. Contact & Support
 For any privacy-related questions or to report issues, please open an issue on our GitHub repository:
-https://github.com/mtfkarukera/magic-clipper-drive
+https://github.com/mtfkarukera/mc4gd-firefox

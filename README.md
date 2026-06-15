@@ -21,7 +21,7 @@ Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre G
 ## 🏗 Architecture
 
 ```text
-magic-clipper-drive/
+mc4gd-firefox/
 ├── manifest.json             # Manifeste V3 (permissions, Event Page)
 ├── README.md                 # Documentation du projet
 ├── src/
