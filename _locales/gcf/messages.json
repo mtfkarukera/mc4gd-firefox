@@ -125,5 +125,13 @@
   },
   "err_file_too_large_50": {
     "message": "Fichyé-la twò gwo (maksimòm sé 200 Mo)."
+  },
+  "err_upload_in_progress": {
+    "message": "On transfè ka fèt déjà.",
+    "description": "Error: concurrent upload attempt blocked"
+  },
+  "err_content_mismatch": {
+    "message": "Sèvè-la voyé on répons ki pa bon (paj koneksyon ?). Éséyé ouvè fichyé-la dirèkteman.",
+    "description": "Error: downloaded content type doesn't match expected type"
   }
 }

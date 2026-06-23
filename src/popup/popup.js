@@ -133,11 +133,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Reconnexion : demander au background s'il y a un upload actif pour cet onglet
   try {
     const uploadStatus = await browser.runtime.sendMessage({ action: "getUploadStatus" });
-    if (uploadStatus && (uploadStatus.state === "downloading" || uploadStatus.state === "uploading")) {
+    const uploadPhase = uploadStatus && (uploadStatus.phase || uploadStatus.state);
+    if (uploadPhase === "downloading" || uploadPhase === "uploading") {
       fileIcon.textContent = getIconForMime(uploadStatus.mimeType);
       fileName.textContent = uploadStatus.fileName;
       fileInfo.classList.remove("warning");
-      setTransferState(uploadStatus.state, uploadStatus.percent);
+      setTransferState(uploadPhase, uploadStatus.percent);
       return;
     }
   } catch (e) {
@@ -300,6 +301,6 @@ disconnectBtn.addEventListener("click", async () => {
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "uploadProgress") {
-    setTransferState(message.state, message.percent);
+    setTransferState(message.phase || message.state, message.percent);
   }
 });

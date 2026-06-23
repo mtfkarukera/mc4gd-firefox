@@ -95,5 +95,13 @@
   "err_file_too_large_50": {
     "message": "Die Datei ist zu groß (die maximale Größe beträgt 200 MB).",
     "description": "Error: file exceeds 200MB limit"
+  },
+  "err_upload_in_progress": {
+    "message": "Ein Upload läuft bereits.",
+    "description": "Error: concurrent upload attempt blocked"
+  },
+  "err_content_mismatch": {
+    "message": "Der Server hat eine unerwartete Antwort zurückgegeben (Anmeldeseite?). Versuchen Sie, die Datei direkt zu öffnen.",
+    "description": "Error: downloaded content type doesn't match expected type"
   }
 }

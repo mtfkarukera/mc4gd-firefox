@@ -95,5 +95,13 @@
   "err_file_too_large_50": {
     "message": "Tệp quá lớn (kích thước tối đa là 200 MB).",
     "description": "Error: file exceeds 200MB limit"
+  },
+  "err_upload_in_progress": {
+    "message": "Đang tải lên, vui lòng chờ.",
+    "description": "Error: concurrent upload attempt blocked"
+  },
+  "err_content_mismatch": {
+    "message": "Máy chủ trả về phản hồi không mong đợi (trang đăng nhập?). Hãy thử mở tệp trực tiếp.",
+    "description": "Error: downloaded content type doesn't match expected type"
   }
 }

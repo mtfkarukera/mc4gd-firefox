@@ -4,7 +4,7 @@
 
 // ============================================================
 // Magic Clipper for Google Drive — background.js (Event Page)
-// Auth OAuth2 + détection format + dossier Drive + upload résumable
+// Auth OAuth2 + détection format + dossier Drive + upload résumable chunké
 // ============================================================
 
 import { FOLDER_NAME, MIME_MAP, initI18n, t, getFileNameFromUrl } from "../shared/utils.js";
@@ -16,6 +16,15 @@ import { FOLDER_NAME, MIME_MAP, initI18n, t, getFileNameFromUrl } from "../share
 const CLIENT_ID = "270035285728-p7ssnc4jqitu5d12j5kuouinirf7vfnf.apps.googleusercontent.com";
 const SCOPES    = "https://www.googleapis.com/auth/drive";
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 Mo
+const CHUNK_SIZE = 8 * 1024 * 1024; // 8 Mo — multiple de 256 Ko (exigence Google Drive API)
+const DOWNLOAD_TIMEOUT_MS = 120_000;  // 2 min
+const UPLOAD_CHUNK_TIMEOUT_MS = 60_000; // 1 min par chunk
+const CLEANUP_DELAY_MS = 30_000; // 30s
+const TOKEN_SAFETY_MARGIN_MS = 120_000; // 2 min
+const UPLOAD_SPEED_ESTIMATE_MS_PER_MB = 3000; // 3s par Mo (estimation conservatrice)
+const SESSION_MAX_AGE_MS = 6 * 24 * 60 * 60 * 1000; // 6 jours (Google expire à 7)
+const NETWORK_RETRY_COUNT = 3;
+const NETWORK_RETRY_BASE_DELAY_MS = 2000;
 
 // Table inversée : mimeType → extension (pour HEAD fallback)
 const MIME_TO_EXT = Object.fromEntries(
@@ -32,10 +41,10 @@ const activeUploads = {};
 let folderCreationPromise = null;
 
 // ----------------------------------------------------------
-// INITIALISATION i18n
+// INITIALISATION i18n (T-01 — attendre avant traitement messages)
 // ----------------------------------------------------------
 
-initI18n();
+const i18nReady = initI18n();
 
 // ----------------------------------------------------------
 // AUTHENTIFICATION OAuth2
@@ -66,7 +75,7 @@ async function getAccessToken(interactive = true) {
       if (!interactive) return null;
       throw new Error("AUTH_NO_TOKEN");
     }
-    const expiresIn = parseInt(params.get("expires_in")) || 3600;
+    const expiresIn = parseInt(params.get("expires_in"), 10) || 3600;
     const expiresAt = Date.now() + expiresIn * 1000;
 
     await browser.storage.local.set({ accessToken: token, expiresAt });
@@ -84,7 +93,7 @@ async function getValidToken() {
   const { accessToken, expiresAt } = await browser.storage.local.get(["accessToken", "expiresAt"]);
 
   // Token encore valide (marge de sécurité : 2 min)
-  if (accessToken && expiresAt > Date.now() + 120_000) {
+  if (accessToken && expiresAt > Date.now() + TOKEN_SAFETY_MARGIN_MS) {
     return accessToken;
   }
 
@@ -217,7 +226,7 @@ async function parseAndThrowDriveError(res) {
       reason = err.error.message;
     }
   } catch (e) {
-    // Échec de parsing
+    // Body isn't JSON — fall through to generic HTTP_${status} error
   }
 
   if (reason === "storageQuotaExceeded") {
@@ -400,28 +409,111 @@ async function getOrCreateFolder(token) {
 }
 
 // ----------------------------------------------------------
+// PERSISTANCE DE L'ÉTAT D'UPLOAD (T-09)
+// ----------------------------------------------------------
+
+/**
+ * Persiste l'état d'upload dans storage.local pour survie au suspend Event Page.
+ * Ne contient aucune donnée sensible (le token est déjà sous sa propre clé).
+ */
+async function persistUploadState(uploadState) {
+  await browser.storage.local.set({
+    activeUpload: {
+      tabId: uploadState.tabId,
+      phase: uploadState.phase,
+      percent: uploadState.percent,
+      fileName: uploadState.fileName,
+      mimeType: uploadState.mimeType,
+      url: uploadState.url,
+      sessionUrl: uploadState.sessionUrl || null,
+      bytesUploaded: uploadState.bytesUploaded || 0,
+      totalSize: uploadState.totalSize || 0,
+      link: uploadState.link || null,
+      error: uploadState.error || null,
+      startedAt: uploadState.startedAt
+    }
+  });
+}
+
+/**
+ * Supprime l'état d'upload persisté.
+ */
+async function clearPersistedUploadState() {
+  await browser.storage.local.remove("activeUpload");
+}
+
+// ----------------------------------------------------------
+// NETTOYAGE DIFFÉRÉ (DRY — T-13 audit code quality H-13)
+// ----------------------------------------------------------
+
+/**
+ * Programme la suppression de l'état mémoire après un délai de garde.
+ */
+function scheduleCleanup(tabId, uploadState) {
+  setTimeout(() => {
+    if (activeUploads[tabId] === uploadState) {
+      delete activeUploads[tabId];
+    }
+    clearPersistedUploadState().catch(() => {});
+  }, CLEANUP_DELAY_MS);
+}
+
+// ----------------------------------------------------------
+// NOTIFICATION POPUP (helper)
+// ----------------------------------------------------------
+
+/**
+ * Notifie la popup ouverte d'un changement d'état d'upload.
+ * Silencieusement ignoré si la popup est fermée.
+ */
+function notifyPopup(phase, percent) {
+  browser.runtime.sendMessage({
+    action: "uploadProgress",
+    phase,
+    percent
+  }).catch(() => {});
+}
+
+// ----------------------------------------------------------
 // DOWNLOAD AVEC PROGRESSION (ReadableStream)
 // ----------------------------------------------------------
 
 /**
  * Télécharge le fichier en calculant son pourcentage de progression.
+ * Valide le Content-Type de la réponse (T-03 — F-06).
+ *
+ * @param {string} url - URL du fichier à télécharger
+ * @param {string} expectedMimeType - MIME type attendu (pour validation)
+ * @param {number} tabId - ID de l'onglet
+ * @param {Object} uploadState - État mutable du transfert
+ * @returns {Promise<Blob>} Le contenu du fichier sous forme de Blob
  */
-async function downloadFileWithProgress(url, tabId, uploadState) {
+async function downloadFileWithProgress(url, expectedMimeType, tabId, uploadState) {
   const controller = new AbortController();
   uploadState.controller = controller;
 
-  // Auto-timeout for stalled downloads (120s)
-  const downloadTimeout = setTimeout(() => controller.abort(), 120_000);
+  // Auto-timeout for stalled downloads
+  const downloadTimeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
 
   const res = await fetch(url, { signal: controller.signal });
   if (!res.ok) {
+    clearTimeout(downloadTimeout);
     throw new Error(`DOWNLOAD_FAILED_HTTP_${res.status}`);
+  }
+
+  // T-03 (F-06) — Valider le Content-Type de la réponse
+  const responseType = (res.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
+  const htmlTypes = ["text/html", "application/xhtml+xml"];
+  if (htmlTypes.includes(responseType) && !htmlTypes.includes(expectedMimeType)) {
+    clearTimeout(downloadTimeout);
+    throw new Error("CONTENT_TYPE_MISMATCH");
   }
 
   const contentLengthHeader = res.headers.get("Content-Length");
   const totalSize = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
 
   if (totalSize > MAX_FILE_SIZE) {
+    clearTimeout(downloadTimeout);
     throw new Error("FILE_TOO_LARGE");
   }
 
@@ -437,6 +529,7 @@ async function downloadFileWithProgress(url, tabId, uploadState) {
     receivedLength += value.length;
 
     if (receivedLength > MAX_FILE_SIZE) {
+      clearTimeout(downloadTimeout);
       throw new Error("FILE_TOO_LARGE");
     }
 
@@ -444,30 +537,30 @@ async function downloadFileWithProgress(url, tabId, uploadState) {
     uploadState.percent = percent;
 
     // Notifier la popup ouverte
-    browser.runtime.sendMessage({
-      action: "uploadProgress",
-      state: "downloading",
-      percent
-    }).catch(() => {});
+    notifyPopup("downloading", percent);
   }
 
   clearTimeout(downloadTimeout);
-  return new Blob(chunks);
+
+  // T-07 — Construire le Blob puis libérer les chunks immédiatement
+  const blob = new Blob(chunks);
+  chunks.length = 0; // Libère les références pour le GC
+
+  return blob;
 }
 
 // ----------------------------------------------------------
-// UPLOAD RÉSUMABLE (Google Drive Resumable Session)
+// UPLOAD RÉSUMABLE CHUNKÉ (Google Drive Resumable Session)
 // ----------------------------------------------------------
 
 /**
- * Upload le fichier vers Google Drive en utilisant une session d'upload résumable
- * et XMLHttpRequest pour suivre le téléversement.
+ * Initie une session d'upload résumable sur Google Drive.
+ * @returns {Promise<string>} L'URL de session résumable
  */
-async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId, tabId, uploadState) {
-  // 1. Initialisation de la session d'upload
+async function initiateResumableSession(fileName, mimeType, fileSize, token, folderId) {
   const metadata = {
     name: fileName,
-    mimeType: mimeType,
+    mimeType,
     parents: [folderId]
   };
 
@@ -479,7 +572,7 @@ async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json; charset=UTF-8",
         "X-Upload-Content-Type": mimeType,
-        "X-Upload-Content-Length": fileBlob.size.toString()
+        "X-Upload-Content-Length": fileSize.toString()
       },
       body: JSON.stringify(metadata)
     }
@@ -496,54 +589,176 @@ async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId
   if (!sessionUrl) {
     throw new Error("SESSION_URL_MISSING");
   }
+  return sessionUrl;
+}
 
-  // 2. Transfert du contenu via XMLHttpRequest PUT (progress monitoring)
-  const xhr = new XMLHttpRequest();
-  uploadState.xhr = xhr;
-  uploadState.state = "uploading";
-  uploadState.percent = 0;
+/**
+ * Interroge la session résumable pour connaître les octets déjà reçus.
+ * @returns {Promise<number>} Le nombre d'octets déjà confirmés par Google
+ */
+async function querySessionProgress(sessionUrl, totalSize) {
+  const res = await fetchWithTimeout(sessionUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Range": `bytes */${totalSize}`
+    }
+  }, UPLOAD_CHUNK_TIMEOUT_MS);
 
-  const uploadPromise = new Promise((resolve, reject) => {
-    xhr.open("PUT", sessionUrl);
-    xhr.timeout = 300_000; // 5 minutes
-    xhr.setRequestHeader("Content-Type", mimeType);
+  if (res.status === 308) {
+    const range = res.headers.get("Range");
+    if (range) {
+      // Format: "bytes=0-12345"
+      const match = range.match(/bytes=0-(\d+)/);
+      if (match) return parseInt(match[1], 10) + 1;
+    }
+    return 0;
+  }
+  if (res.status === 200 || res.status === 201) {
+    // Upload déjà terminé
+    return totalSize;
+  }
+  // Session expirée ou invalide
+  throw new Error("SESSION_EXPIRED");
+}
 
-    xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        uploadState.percent = percent;
+/**
+ * Upload le fichier par morceaux de CHUNK_SIZE via le protocole résumable.
+ * Chaque chunk est envoyé avec un en-tête Content-Range.
+ *
+ * @param {Blob} fileBlob - Le contenu du fichier
+ * @param {string} sessionUrl - URL de session résumable
+ * @param {string} mimeType - Type MIME du fichier
+ * @param {number} startByte - Octet de reprise (0 pour un nouvel upload)
+ * @param {Object} uploadState - État mutable du transfert
+ * @returns {Promise<Object>} Réponse JSON de Google (id, name, webViewLink)
+ */
+async function uploadChunked(fileBlob, sessionUrl, mimeType, startByte, uploadState) {
+  const totalSize = fileBlob.size;
+  let offset = startByte;
 
-        // Notifier la popup ouverte
-        browser.runtime.sendMessage({
-          action: "uploadProgress",
-          state: "uploading",
-          percent
-        }).catch(() => {});
-      }
-    });
+  // AbortController dédié pour la phase upload
+  const uploadController = new AbortController();
+  uploadState.uploadController = uploadController;
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve(JSON.parse(xhr.responseText));
-        } catch (e) {
-          resolve({ id: null, name: fileName });
+  while (offset < totalSize) {
+    // Vérifier annulation avant chaque chunk
+    if (uploadController.signal.aborted) {
+      throw new Error("ABORTED");
+    }
+
+    const end = Math.min(offset + CHUNK_SIZE, totalSize);
+    const chunkSlice = fileBlob.slice(offset, end);
+    const isLastChunk = (end === totalSize);
+
+    const contentRange = `bytes ${offset}-${end - 1}/${totalSize}`;
+
+    let res;
+    let networkRetries = NETWORK_RETRY_COUNT;
+    let retryDelay = NETWORK_RETRY_BASE_DELAY_MS;
+
+    // Boucle de retry réseau pour ce chunk (T-11)
+    while (true) {
+      try {
+        res = await fetch(sessionUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": mimeType,
+            "Content-Range": contentRange
+          },
+          body: chunkSlice,
+          signal: uploadController.signal
+        });
+        break; // Succès — sortir de la boucle de retry
+      } catch (err) {
+        if (err.name === "AbortError") {
+          throw new Error("ABORTED");
         }
-      } else {
-        const status = xhr.status;
-        if (status === 401) reject(new Error("RETRY_401"));
-        else if (status === 404) reject(new Error("RETRY_404"));
-        else reject(new Error(`DRIVE_API_ERROR_HTTP_${status}`));
+        // Erreur réseau (TypeError dans fetch)
+        networkRetries--;
+        if (networkRetries <= 0) {
+          throw new Error("UPLOAD_NETWORK_ERROR");
+        }
+        console.warn(`Upload chunk failed (network). Retrying in ${retryDelay}ms... (${networkRetries} retries left)`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        retryDelay *= 2;
+
+        // Vérifier l'état de la session avant de réessayer
+        try {
+          const confirmed = await querySessionProgress(sessionUrl, totalSize);
+          if (confirmed >= totalSize) {
+            // L'upload est déjà terminé côté Google
+            return { id: null, name: uploadState.fileName };
+          }
+          // Ajuster l'offset si Google a reçu plus que prévu
+          if (confirmed > offset) {
+            offset = confirmed;
+          }
+        } catch (queryErr) {
+          // Impossible de vérifier — on réessaie avec le même offset
+        }
       }
-    };
+    }
 
-    xhr.onerror = () => reject(new Error("UPLOAD_NETWORK_ERROR"));
-    xhr.onabort = () => reject(new Error("ABORTED"));
-    xhr.ontimeout = () => reject(new Error("TIMEOUT"));
-  });
+    // Traiter la réponse
+    if (isLastChunk && (res.status === 200 || res.status === 201)) {
+      // Upload terminé — parser la réponse JSON
+      try {
+        return await res.json();
+      } catch (e) {
+        return { id: null, name: uploadState.fileName };
+      }
+    } else if (res.status === 308) {
+      // Chunk intermédiaire accepté — continuer
+      offset = end;
+    } else if (res.status === 200 || res.status === 201) {
+      // Google a reçu assez de données et a terminé (fichier petit, dernier chunk)
+      try {
+        return await res.json();
+      } catch (e) {
+        return { id: null, name: uploadState.fileName };
+      }
+    } else if (res.status === 401) {
+      throw new Error("RETRY_401");
+    } else if (res.status === 404) {
+      throw new Error("RETRY_404");
+    } else {
+      throw new Error(`DRIVE_API_ERROR_HTTP_${res.status}`);
+    }
 
-  xhr.send(fileBlob);
-  return uploadPromise;
+    // Mettre à jour la progression
+    uploadState.bytesUploaded = offset;
+    const percent = Math.round((offset / totalSize) * 100);
+    uploadState.percent = percent;
+
+    // Notifier la popup
+    notifyPopup("uploading", percent);
+
+    // Persister l'état après chaque chunk (T-09)
+    persistUploadState(uploadState).catch(() => {});
+  }
+
+  // Ne devrait pas arriver (boucle terminée sans return)
+  throw new Error("UPLOAD_UNEXPECTED_END");
+}
+
+/**
+ * Upload le fichier vers Google Drive en utilisant le protocole résumable chunké.
+ * Gère l'initialisation de session + l'upload par morceaux.
+ */
+async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId, tabId, uploadState) {
+  // 1. Initialisation de la session d'upload résumable
+  const sessionUrl = await initiateResumableSession(fileName, mimeType, fileBlob.size, token, folderId);
+
+  // Persister la session URL pour reprise éventuelle
+  uploadState.sessionUrl = sessionUrl;
+  uploadState.phase = "uploading";
+  uploadState.percent = 0;
+  uploadState.totalSize = fileBlob.size;
+  uploadState.bytesUploaded = 0;
+  await persistUploadState(uploadState);
+
+  // 2. Upload chunké
+  return uploadChunked(fileBlob, sessionUrl, mimeType, 0, uploadState);
 }
 
 // ----------------------------------------------------------
@@ -552,6 +767,7 @@ async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId
 
 /**
  * Enveloppe le téléchargement et l'upload résumable avec retry automatique unique.
+ * Inclut le rafraîchissement préventif du token (T-13 — F-07).
  */
 async function uploadWithRetry(url, fileName, mimeType, tabId, uploadState) {
   let token = await getValidToken();
@@ -559,12 +775,21 @@ async function uploadWithRetry(url, fileName, mimeType, tabId, uploadState) {
 
   let fileBlob;
   try {
-    fileBlob = await downloadFileWithProgress(url, tabId, uploadState);
+    // T-03 (F-06) — Passer le expectedMimeType pour validation
+    fileBlob = await downloadFileWithProgress(url, mimeType, tabId, uploadState);
   } catch (err) {
     if (err.name === "AbortError" || err.message === "TIMEOUT") {
       throw new Error("TIMEOUT");
     }
     throw err;
+  }
+
+  // T-13 (F-07) — Rafraîchir le token préventivement si proche de l'expiration
+  const { expiresAt } = await browser.storage.local.get("expiresAt");
+  const estimatedUploadMs = (fileBlob.size / (1024 * 1024)) * UPLOAD_SPEED_ESTIMATE_MS_PER_MB;
+  if (expiresAt < Date.now() + estimatedUploadMs + TOKEN_SAFETY_MARGIN_MS) {
+    await browser.storage.local.remove(["accessToken", "expiresAt"]);
+    token = await getValidToken();
   }
 
   try {
@@ -609,6 +834,43 @@ async function disconnect() {
 }
 
 // ----------------------------------------------------------
+// MAPPING ERREUR → i18n (DRY — audit M-15)
+// ----------------------------------------------------------
+
+const ERROR_I18N_MAP = {
+  FILE_TOO_LARGE: "err_file_too_large_50",
+  TIMEOUT: "err_timeout",
+  RATE_LIMIT_EXCEEDED: "err_rate_limit",
+  GOOGLE_SERVER_ERROR: "err_google_server",
+  QUOTA_EXCEEDED: "err_quota",
+  ABORTED: "err_upload_aborted",
+  CONTENT_TYPE_MISMATCH: "err_content_mismatch",
+  UPLOAD_NETWORK_ERROR: "err_network"
+};
+
+/**
+ * Convertit une erreur interne en message i18n pour l'utilisateur.
+ */
+function errorToI18nMessage(e) {
+  // Lookup direct dans la map
+  const mappedKey = ERROR_I18N_MAP[e.message];
+  if (mappedKey) return t(mappedKey);
+
+  // Cas spéciaux nécessitant une extraction de données
+  if (e.message?.startsWith("DOWNLOAD_FAILED_HTTP_")) {
+    const status = e.message.replace("DOWNLOAD_FAILED_HTTP_", "");
+    return t("err_download_failed", { STATUS: status });
+  }
+  if (e.message?.includes("auth") || e.message?.includes("identity")) {
+    return t("err_auth_failed");
+  }
+  if (e.name === "TypeError") {
+    return t("err_network");
+  }
+  return t("err_upload_failed");
+}
+
+// ----------------------------------------------------------
 // ROUTEUR DE MESSAGES — handleMessage
 // ----------------------------------------------------------
 
@@ -618,6 +880,9 @@ async function disconnect() {
  * @returns {Promise<Object>} Réponse à sendResponse
  */
 async function handleMessage(message) {
+  // T-01 (F-03) — Attendre que l'i18n soit initialisé
+  await i18nReady;
+
   switch (message.action) {
 
     case "getRedirectURL":
@@ -641,11 +906,22 @@ async function handleMessage(message) {
         const tabs = await browser.tabs.query({ currentWindow: true, active: true });
         const tab = tabs[0];
         if (!tab) return null;
-        const uploadState = activeUploads[tab.id];
+
+        // Vérifier l'état en mémoire d'abord
+        let uploadState = activeUploads[tab.id];
+
+        // T-12 — Fallback vers storage.local si le background a été redémarré
+        if (!uploadState) {
+          const { activeUpload } = await browser.storage.local.get("activeUpload");
+          if (activeUpload && activeUpload.tabId === tab.id) {
+            uploadState = activeUpload;
+          }
+        }
+
         if (!uploadState) return null;
 
         const result = {
-          state: uploadState.state,
+          phase: uploadState.phase,
           percent: uploadState.percent,
           fileName: uploadState.fileName,
           mimeType: uploadState.mimeType,
@@ -654,8 +930,9 @@ async function handleMessage(message) {
         };
 
         // Si l'envoi a fini ou est en échec, on vide l'état après lecture
-        if (uploadState.state === "success" || uploadState.state === "error") {
+        if (uploadState.phase === "success" || uploadState.phase === "error") {
           delete activeUploads[tab.id];
+          clearPersistedUploadState().catch(() => {});
         }
         return result;
       } catch (e) {
@@ -670,13 +947,16 @@ async function handleMessage(message) {
         if (!tab) return { success: false };
         const uploadState = activeUploads[tab.id];
         if (uploadState) {
-          if (uploadState.xhr) {
-            uploadState.xhr.abort();
-          }
+          // Abort download controller
           if (uploadState.controller) {
             uploadState.controller.abort();
           }
+          // Abort upload controller (remplace l'ancien xhr.abort)
+          if (uploadState.uploadController) {
+            uploadState.uploadController.abort();
+          }
           delete activeUploads[tab.id];
+          clearPersistedUploadState().catch(() => {});
         }
         return { success: true };
       } catch (e) {
@@ -692,6 +972,11 @@ async function handleMessage(message) {
       }
       const tabId = tab.id;
 
+      // T-02 (F-05) — Garde anti-double upload
+      if (activeUploads[tabId]) {
+        return { success: false, error: t("err_upload_in_progress") };
+      }
+
       // Détection du format
       const detection = await detectFileFromTab(tab);
       if (!detection.supported) {
@@ -704,68 +989,45 @@ async function handleMessage(message) {
 
       // Initialiser le suivi du transfert en arrière-plan
       const uploadState = {
-        state: "downloading",
+        tabId,
+        phase: "downloading",
         percent: 0,
         fileName: detection.fileName,
         mimeType: detection.mimeType,
-        xhr: null,
-        controller: null,
+        url: tab.url,
+        sessionUrl: null,
+        bytesUploaded: 0,
+        totalSize: 0,
+        controller: null,       // AbortController pour le download
+        uploadController: null, // AbortController pour l'upload chunké
         link: null,
-        error: null
+        error: null,
+        startedAt: Date.now()
       };
       activeUploads[tabId] = uploadState;
+
+      // Persister l'état initial
+      await persistUploadState(uploadState);
 
       try {
         const result = await uploadWithRetry(tab.url, detection.fileName, detection.mimeType, tabId, uploadState);
 
         const finalLink = result.webViewLink;
-        uploadState.state = "success";
+        uploadState.phase = "success";
         uploadState.link = finalLink;
+        await persistUploadState(uploadState);
 
-        // Vider la mémoire après 30s de garde si la popup n'a pas lu le statut
-        setTimeout(() => {
-          if (activeUploads[tabId] === uploadState) {
-            delete activeUploads[tabId];
-          }
-        }, 30000);
+        scheduleCleanup(tabId, uploadState);
 
         return { success: true, fileName: result.name, link: finalLink };
       } catch (e) {
-        if (e.message === "ABORTED") {
-          uploadState.state = "error";
-          uploadState.error = t("err_upload_aborted");
-          setTimeout(() => {
-            if (activeUploads[tabId] === uploadState) delete activeUploads[tabId];
-          }, 30000);
-          return { success: false, error: t("err_upload_aborted") };
-        }
+        const errorMsg = errorToI18nMessage(e);
 
-        let errorMsg = t("err_upload_failed");
-        if (e.message === "FILE_TOO_LARGE") {
-          errorMsg = t("err_file_too_large_50");
-        } else if (e.message === "TIMEOUT") {
-          errorMsg = t("err_timeout");
-        } else if (e.message === "RATE_LIMIT_EXCEEDED") {
-          errorMsg = t("err_rate_limit");
-        } else if (e.message === "GOOGLE_SERVER_ERROR") {
-          errorMsg = t("err_google_server");
-        } else if (e.message === "QUOTA_EXCEEDED") {
-          errorMsg = t("err_quota");
-        } else if (e.message?.startsWith("DOWNLOAD_FAILED_HTTP_")) {
-          const status = e.message.replace("DOWNLOAD_FAILED_HTTP_", "");
-          errorMsg = t("err_download_failed", { STATUS: status });
-        } else if (e.message?.includes("auth") || e.message?.includes("identity")) {
-          errorMsg = t("err_auth_failed");
-        } else if (e.name === "TypeError") {
-          errorMsg = t("err_network");
-        }
-
-        uploadState.state = "error";
+        uploadState.phase = "error";
         uploadState.error = errorMsg;
+        await persistUploadState(uploadState);
 
-        setTimeout(() => {
-          if (activeUploads[tabId] === uploadState) delete activeUploads[tabId];
-        }, 30000);
+        scheduleCleanup(tabId, uploadState);
 
         return { success: false, error: errorMsg };
       }
@@ -807,9 +1069,79 @@ browser.tabs.onRemoved.addListener((tabId) => {
   if (uploadState.controller) {
     uploadState.controller.abort();
   }
-  // Abort active upload XHR
-  if (uploadState.xhr) {
-    uploadState.xhr.abort();
+  // Abort active upload
+  if (uploadState.uploadController) {
+    uploadState.uploadController.abort();
   }
   delete activeUploads[tabId];
+  clearPersistedUploadState().catch(() => {});
 });
+
+// ----------------------------------------------------------
+// REPRISE D'UPLOAD AU RÉVEIL DU BACKGROUND (T-10)
+// ----------------------------------------------------------
+
+(async () => {
+  await i18nReady;
+
+  const { activeUpload } = await browser.storage.local.get("activeUpload");
+  if (!activeUpload) return;
+
+  const { tabId, phase, sessionUrl, bytesUploaded, totalSize, startedAt, fileName, mimeType, url } = activeUpload;
+
+  // Sessions trop anciennes — nettoyer
+  if (startedAt && (Date.now() - startedAt) > SESSION_MAX_AGE_MS) {
+    await clearPersistedUploadState();
+    return;
+  }
+
+  // Phase downloading — impossible de reprendre un download interrompu
+  if (phase === "downloading") {
+    activeUpload.phase = "error";
+    activeUpload.error = t("err_network");
+    activeUploads[tabId] = activeUpload;
+    await persistUploadState(activeUpload);
+    scheduleCleanup(tabId, activeUpload);
+    return;
+  }
+
+  // Phase uploading — tenter la reprise si session valide
+  if (phase === "uploading" && sessionUrl && totalSize > 0) {
+    try {
+      const confirmed = await querySessionProgress(sessionUrl, totalSize);
+
+      if (confirmed >= totalSize) {
+        // Upload déjà terminé côté Google — marquer comme succès
+        activeUpload.phase = "success";
+        activeUpload.percent = 100;
+        activeUploads[tabId] = activeUpload;
+        await persistUploadState(activeUpload);
+        scheduleCleanup(tabId, activeUpload);
+        return;
+      }
+
+      // Session encore active — on doit re-télécharger le fichier pour reprendre
+      // (le Blob n'est pas persisté). Marquer comme erreur pour l'instant.
+      // L'utilisateur peut relancer manuellement.
+      activeUpload.phase = "error";
+      activeUpload.error = t("err_network");
+      activeUploads[tabId] = activeUpload;
+      await persistUploadState(activeUpload);
+      scheduleCleanup(tabId, activeUpload);
+    } catch (e) {
+      // Session expirée ou erreur réseau
+      activeUpload.phase = "error";
+      activeUpload.error = t("err_upload_failed");
+      activeUploads[tabId] = activeUpload;
+      await persistUploadState(activeUpload);
+      scheduleCleanup(tabId, activeUpload);
+    }
+    return;
+  }
+
+  // Phases success/error — ne rien faire (sera lu par la popup)
+  if (phase === "success" || phase === "error") {
+    activeUploads[tabId] = activeUpload;
+    scheduleCleanup(tabId, activeUpload);
+  }
+})();

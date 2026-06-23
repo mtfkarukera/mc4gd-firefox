@@ -5,6 +5,27 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.9.0] — 2026-06-24
+
+### Ajouté
+- Upload résumable **chunké par morceaux de 8 Mo** (`CHUNK_SIZE`), remplaçant l'upload monolithique XHR. Empreinte mémoire réduite de ~400 Mo à ~8 Mo pour les gros fichiers.
+- Persistance de l'état d'upload (`activeUpload`) dans `browser.storage.local` après chaque chunk. L'état survit à la suspension du background (Event Page MV3).
+- Logique de reprise au réveil : vérification de la session résumable via `Content-Range: bytes */{total}` et restauration de l'état en mémoire.
+- Retry réseau automatique dans la boucle de chunks : 3 tentatives avec backoff exponentiel (2s→4s→8s) et interrogation de la session avant chaque retry.
+- Rafraîchissement préventif du token OAuth2 avant l'upload si le temps estimé de transfert (~3s/Mo) risque de dépasser la durée de vie restante du token.
+- Garde anti-double upload : un seul upload par onglet autorisé, les tentatives concurrentes sont rejetées avec un message localisé (`err_upload_in_progress`).
+- Validation du Content-Type après téléchargement : rejet des redirections silencieuses vers des pages HTML (portails d'authentification) avec message localisé (`err_content_mismatch`).
+- Nouvelles clés i18n `err_upload_in_progress` et `err_content_mismatch` dans les 6 locales.
+- Table de mapping `ERROR_I18N_MAP` centralisée pour la conversion erreur→message i18n (remplace la chaîne if-else).
+- Fonctions helpers DRY : `scheduleCleanup()`, `notifyPopup()`, `persistUploadState()`, `clearPersistedUploadState()`, `querySessionProgress()`.
+- Constantes nommées : `CHUNK_SIZE`, `DOWNLOAD_TIMEOUT_MS`, `UPLOAD_CHUNK_TIMEOUT_MS`, `CLEANUP_DELAY_MS`, `TOKEN_SAFETY_MARGIN_MS`, `SESSION_MAX_AGE_MS`, `NETWORK_RETRY_COUNT`, `NETWORK_RETRY_BASE_DELAY_MS`.
+
+### Modifié
+- Remplacement complet de `XMLHttpRequest` par `fetch()` pour l'upload vers Google Drive (protocole résumable chunké avec en-têtes `Content-Range`).
+- Le champ `state` des messages de progression est renommé en `phase` (rétrocompatibilité assurée dans la popup via `msg.phase || msg.state`).
+- `initI18n()` est désormais attendu (`await i18nReady`) avant tout traitement de message pour garantir que les textes sont traduits dès le premier appel.
+- Libération mémoire explicite : `chunks.length = 0` après construction du Blob de téléchargement.
+
 ## [1.8.0] — 2026-06-15
 
 ### Ajouté
