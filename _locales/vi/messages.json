@@ -103,5 +103,17 @@
   "err_content_mismatch": {
     "message": "Máy chủ trả về phản hồi không mong đợi (trang đăng nhập?). Hãy thử mở tệp trực tiếp.",
     "description": "Error: downloaded content type doesn't match expected type"
+  },
+  "popup_disconnect_confirm_announce": {
+    "message": "Nhấp lại để xác nhận đăng xuất.",
+    "description": "Accessible announcement when disconnect button enters confirm mode"
+  },
+  "popup_auth_disconnected": {
+    "message": "Đã đăng xuất",
+    "description": "Auth badge label after disconnect"
+  },
+  "popup_disconnected_status": {
+    "message": "Đã đăng xuất. Nhấn Gửi để kết nối lại.",
+    "description": "Status message shown after disconnect"
   }
 }

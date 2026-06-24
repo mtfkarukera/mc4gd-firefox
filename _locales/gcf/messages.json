@@ -133,5 +133,17 @@
   "err_content_mismatch": {
     "message": "Sèvè-la voyé on répons ki pa bon (paj koneksyon ?). Éséyé ouvè fichyé-la dirèkteman.",
     "description": "Error: downloaded content type doesn't match expected type"
+  },
+  "popup_disconnect_confirm_announce": {
+    "message": "Kliké ankò pou konfimé dékoneksyon-la.",
+    "description": "Accessible announcement when disconnect button enters confirm mode"
+  },
+  "popup_auth_disconnected": {
+    "message": "Dékonetè",
+    "description": "Auth badge label after disconnect"
+  },
+  "popup_disconnected_status": {
+    "message": "Dékonetè. Klik Anvoyé pou konektè ankò.",
+    "description": "Status message shown after disconnect"
   }
 }

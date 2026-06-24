@@ -43,6 +43,9 @@ const onboardingBtn     = document.getElementById("onboarding-btn");
 const progressContainer = document.getElementById("progress-container");
 const progressBar       = document.getElementById("progress-bar");
 
+// #file-icon contient des emoji décoratifs — masquer aux lecteurs d'écran (A-05)
+fileIcon.setAttribute("aria-hidden", "true");
+
 let isUploading = false;
 
 // ----------------------------------------------------------
@@ -59,24 +62,48 @@ function setAuthBadge(state, label) {
   authStatus.textContent = label;
 }
 
-function setTransferState(state, percent) {
-  if (state === "downloading" || state === "uploading") {
+/**
+ * Met à jour la visibilité du bouton Déconnecter selon l'état d'authentification.
+ * @param {boolean} isAuthenticated — true si un accessToken existe
+ */
+function updateDisconnectVisibility(isAuthenticated) {
+  if (isAuthenticated) {
+    disconnectBtn.classList.remove("hidden");
+  } else {
+    disconnectBtn.classList.add("hidden");
+  }
+}
+
+// Throttle des annonces de progression (A-07) — toutes les 10%
+let lastAnnouncedPercent = -1;
+let currentAnnouncedPhase = null;
+
+function setTransferState(phase, percent) {
+  if (phase === "downloading" || phase === "uploading") {
     isUploading = true;
     progressContainer.classList.remove("hidden");
     progressBar.style.width = percent + "%";
     progressBar.setAttribute("aria-valuenow", percent);
-    
-    if (state === "downloading") {
-      setStatusLive(t("popup_state_downloading", { PERCENT: percent }));
-    } else {
-      setStatusLive(t("popup_state_uploading", { PERCENT: percent }));
+
+    // Annonce live throttlée : seulement si changement de phase ou palier de 10%
+    const bucket = Math.floor((percent ?? 0) / 10) * 10;
+    if (phase !== currentAnnouncedPhase || bucket > lastAnnouncedPercent) {
+      if (phase === "downloading") {
+        setStatusLive(t("popup_state_downloading", { PERCENT: percent }));
+      } else {
+        setStatusLive(t("popup_state_uploading", { PERCENT: percent }));
+      }
+      lastAnnouncedPercent = bucket;
+      currentAnnouncedPhase = phase;
     }
-    
+
     btnSpinner.classList.add("hidden");
     uploadBtn.disabled = false;
     uploadBtn.classList.add("cancel-active");
     btnText.textContent = t("popup_btn_cancel");
     setAuthBadge("loading", t("popup_btn_uploading"));
+    // Masquer Déconnecter pendant un transfert
+    disconnectBtn.classList.add("hidden");
   } else {
     isUploading = false;
     progressContainer.classList.add("hidden");
@@ -106,66 +133,109 @@ function applyI18n() {
 }
 
 // ----------------------------------------------------------
-// INITIALISATION
+// FOCUS TRAP — dialog d'onboarding (A-01)
 // ----------------------------------------------------------
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // Lire la locale persistée
-  const stored = await browser.storage.local.get(["locale", "hasSeenWelcome"]);
-  const savedLocale = stored.locale || "auto";
-  langSelect.value = savedLocale;
-  await initI18n(savedLocale === "auto" ? null : savedLocale);
+/**
+ * Piège le focus dans un dialog : Tab/Shift+Tab bouclent dans les éléments focusables.
+ * @param {HTMLElement} dialogEl — L'élément dialog
+ * @returns {Function} Fonction de nettoyage (remove listener)
+ */
+function trapFocus(dialogEl) {
+  const focusableSelectors = [
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(", ");
 
-  // Appliquer les traductions sur tous les attributs data-i18n
-  applyI18n();
+  const focusable = Array.from(dialogEl.querySelectorAll(focusableSelectors));
+  if (focusable.length === 0) return () => {};
 
-  // Gérer l'onboarding
-  if (!stored.hasSeenWelcome) {
-    onboardingOverlay.classList.remove("hidden");
-    document.getElementById("onboarding-btn").focus();
-  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
 
-  onboardingBtn.addEventListener("click", async () => {
-    onboardingOverlay.classList.add("hidden");
-    await browser.storage.local.set({ hasSeenWelcome: true });
-  });
-
-  // Reconnexion : demander au background s'il y a un upload actif pour cet onglet
-  try {
-    const uploadStatus = await browser.runtime.sendMessage({ action: "getUploadStatus" });
-    const uploadPhase = uploadStatus && (uploadStatus.phase || uploadStatus.state);
-    if (uploadPhase === "downloading" || uploadPhase === "uploading") {
-      fileIcon.textContent = getIconForMime(uploadStatus.mimeType);
-      fileName.textContent = uploadStatus.fileName;
-      fileInfo.classList.remove("warning");
-      setTransferState(uploadPhase, uploadStatus.percent);
-      return;
+  function onKeyDown(e) {
+    if (e.key !== "Tab") return;
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
-  } catch (e) {
-    // Continuer vers l'init standard en cas d'erreur
   }
 
-  // État initial : détection en cours
+  dialogEl.addEventListener("keydown", onKeyDown);
+  return () => dialogEl.removeEventListener("keydown", onKeyDown);
+}
+
+// Variable pour stocker la fonction de nettoyage du trap
+let releaseTrap = null;
+// Élément qui avait le focus avant l'ouverture du dialog
+let focusBeforeDialog = null;
+
+/**
+ * Ferme le dialog d'onboarding, relâche le focus trap, restaure le focus. (A-02)
+ */
+async function closeOnboarding() {
+  onboardingOverlay.classList.add("hidden");
+  await browser.storage.local.set({ hasSeenWelcome: true });
+  if (releaseTrap) {
+    releaseTrap();
+    releaseTrap = null;
+  }
+  // Restaurer le focus vers l'élément qui le détenait avant, ou le bouton d'upload
+  if (focusBeforeDialog && typeof focusBeforeDialog.focus === "function") {
+    focusBeforeDialog.focus();
+  } else {
+    uploadBtn.focus();
+  }
+}
+
+// ----------------------------------------------------------
+// DÉTECTION D'ONGLET — réutilisable au démarrage et post-déconnexion
+// ----------------------------------------------------------
+
+/**
+ * Interroge le background sur l'état de l'onglet actif et met à jour l'interface.
+ * Vérifie également si un accessToken est présent pour le badge d'authentification.
+ */
+async function initTabStatus() {
   setAuthBadge("loading", t("popup_auth_loading"));
   setStatusLive(t("popup_detecting"));
 
   try {
-    // Demander au background l'état de l'onglet actif
     const result = await browser.runtime.sendMessage({ action: "getTabStatus" });
 
     if (result.supported) {
-      // Fichier supporté détecté
       fileIcon.textContent = getIconForMime(result.mimeType);
       fileName.textContent = result.fileName;
       fileInfo.classList.remove("warning");
-      setAuthBadge("success", t("popup_auth_connected"));
-      setStatusLive(t("popup_idle_label"));
+
+      // Vérifier si l'utilisateur est authentifié (accessToken en storage)
+      const { accessToken } = await browser.storage.local.get("accessToken");
+      if (accessToken) {
+        setAuthBadge("success", t("popup_auth_connected"));
+        setStatusLive(t("popup_idle_label"));
+        updateDisconnectVisibility(true);
+      } else {
+        setAuthBadge("disconnected", t("popup_auth_disconnected"));
+        setStatusLive(t("popup_disconnected_status"));
+        updateDisconnectVisibility(false);
+      }
       uploadBtn.disabled = false;
 
     } else {
-      // Onglet non éligible
       fileInfo.classList.add("warning");
       uploadBtn.disabled = true;
+      updateDisconnectVisibility(false);
 
       if (result.reason === "local_file") {
         fileName.textContent = t("popup_local_file");
@@ -192,7 +262,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     fileName.textContent = t("popup_no_file");
     setAuthBadge("error", t("popup_auth_error"));
     setStatusLive(t("err_network"));
+    updateDisconnectVisibility(false);
   }
+}
+
+// ----------------------------------------------------------
+// INITIALISATION
+// ----------------------------------------------------------
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Lire la locale persistée
+  const stored = await browser.storage.local.get(["locale", "hasSeenWelcome"]);
+  const savedLocale = stored.locale || "auto";
+  langSelect.value = savedLocale;
+  await initI18n(savedLocale === "auto" ? null : savedLocale);
+
+  // Appliquer les traductions sur tous les attributs data-i18n
+  applyI18n();
+
+  // Gérer l'onboarding
+  if (!stored.hasSeenWelcome) {
+    focusBeforeDialog = document.activeElement;
+    onboardingOverlay.classList.remove("hidden");
+    onboardingBtn.focus();
+    // Activer le focus trap (A-01)
+    releaseTrap = trapFocus(onboardingOverlay);
+  }
+
+  // Bouton "J'ai compris" de l'onboarding
+  onboardingBtn.addEventListener("click", closeOnboarding);
+
+  // Fermeture par Escape (A-02)
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !onboardingOverlay.classList.contains("hidden")) {
+      closeOnboarding();
+    }
+  });
+
+  // Reconnexion : demander au background s'il y a un upload actif pour cet onglet
+  try {
+    const uploadStatus = await browser.runtime.sendMessage({ action: "getUploadStatus" });
+    const uploadPhase = uploadStatus && (uploadStatus.phase || uploadStatus.state);
+    if (uploadPhase === "downloading" || uploadPhase === "uploading") {
+      fileIcon.textContent = getIconForMime(uploadStatus.mimeType);
+      fileName.textContent = uploadStatus.fileName;
+      fileInfo.classList.remove("warning");
+      setTransferState(uploadPhase, uploadStatus.percent);
+      return;
+    }
+  } catch (e) {
+    // Continuer vers l'init standard en cas d'erreur
+  }
+
+  // Détection initiale de l'onglet
+  await initTabStatus();
 });
 
 // ----------------------------------------------------------
@@ -222,6 +345,10 @@ uploadBtn.addEventListener("click", async () => {
     return;
   }
 
+  // Réinitialiser le throttle de progression (A-07)
+  lastAnnouncedPercent = -1;
+  currentAnnouncedPhase = null;
+
   // Action d'envoi
   isUploading = true;
   driveLinkRow.classList.add("hidden");
@@ -236,6 +363,7 @@ uploadBtn.addEventListener("click", async () => {
       setAuthBadge("success", t("popup_auth_connected"));
       setStatusLive(t("popup_success", { FILE_NAME: response.fileName }));
       uploadBtn.disabled = true;
+      updateDisconnectVisibility(true);
 
       if (response.link && response.link.startsWith("https://drive.google.com/")) {
         driveLink.href = response.link;
@@ -246,6 +374,9 @@ uploadBtn.addEventListener("click", async () => {
       setAuthBadge("error", t("popup_auth_error"));
       setStatusLive(response.error);
       uploadBtn.disabled = false;
+      // Vérifier l'auth pour décider de la visibilité du bouton déconnexion
+      const { accessToken } = await browser.storage.local.get("accessToken");
+      updateDisconnectVisibility(!!accessToken);
     }
 
   } catch (e) {
@@ -253,6 +384,7 @@ uploadBtn.addEventListener("click", async () => {
     setAuthBadge("error", t("popup_auth_error"));
     setStatusLive(t("err_upload_failed"));
     uploadBtn.disabled = false;
+    updateDisconnectVisibility(false);
   }
 });
 
@@ -269,6 +401,8 @@ disconnectBtn.addEventListener("click", async () => {
     disconnectPending = true;
     disconnectBtn.textContent = t("popup_btn_disconnect_confirm");
     disconnectBtn.classList.add("confirm-active");
+    // Annoncer le changement à la live region (A-03)
+    setStatusLive(t("popup_disconnect_confirm_announce"));
     disconnectTimer = setTimeout(() => {
       disconnectPending = false;
       disconnectBtn.textContent = t("popup_btn_disconnect");
@@ -281,26 +415,49 @@ disconnectBtn.addEventListener("click", async () => {
   clearTimeout(disconnectTimer);
   disconnectPending = false;
   disconnectBtn.classList.remove("confirm-active");
+  disconnectBtn.textContent = t("popup_btn_disconnect");
 
-  try {
-    await browser.runtime.sendMessage({ action: "disconnect" });
-    disconnectBtn.textContent = t("popup_btn_disconnect");
-    setAuthBadge("loading", t("popup_auth_loading"));
-    setStatusLive(t("popup_auth_loading"));
-    driveLinkRow.classList.add("hidden");
-    uploadBtn.disabled = true;
-  } catch (e) {
-    disconnectBtn.textContent = t("popup_btn_disconnect");
-    setStatusLive(t("err_network"));
-  }
+  // Fire-and-forget — la révocation token est best-effort côté background.
+  browser.runtime.sendMessage({ action: "disconnect" }).catch(() => {});
+
+  // Mise à jour synchrone de l'interface
+  driveLinkRow.classList.add("hidden");
+  setTransferState("idle", 0);
+  setAuthBadge("disconnected", t("popup_auth_disconnected"));
+  setStatusLive(t("popup_disconnected_status"));
+  updateDisconnectVisibility(false);
+  uploadBtn.disabled = false;
 });
 
 // ----------------------------------------------------------
-// COMMUNICATOR PROGRESSION
+// COMMUNICATOR PROGRESSION — messages du background
 // ----------------------------------------------------------
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "uploadProgress") {
-    setTransferState(message.phase || message.state, message.percent);
+    const phase = message.phase || message.state;
+    setTransferState(phase, message.percent);
+  }
+  // Message de fin d'upload envoyé par le background
+  if (message.action === "uploadComplete") {
+    setTransferState("idle", 0);
+    if (message.success) {
+      setAuthBadge("success", t("popup_auth_connected"));
+      setStatusLive(t("popup_success", { FILE_NAME: message.fileName }));
+      uploadBtn.disabled = true;
+      updateDisconnectVisibility(true);
+      if (message.link && message.link.startsWith("https://drive.google.com/")) {
+        driveLink.href = message.link;
+        driveLinkRow.classList.remove("hidden");
+        driveLink.focus();
+      }
+    } else {
+      setAuthBadge("error", t("popup_auth_error"));
+      setStatusLive(message.error || t("err_upload_failed"));
+      uploadBtn.disabled = false;
+      browser.storage.local.get("accessToken").then(({ accessToken }) => {
+        updateDisconnectVisibility(!!accessToken);
+      });
+    }
   }
 });

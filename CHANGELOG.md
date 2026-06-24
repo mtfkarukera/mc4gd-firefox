@@ -5,6 +5,30 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.10.0] — 2026-06-24
+
+### Sécurité
+- Blocage des adresses IPv4-mapped IPv6 (`::ffff:192.168.x.x`) dans la garde anti-SSRF de `isPrivateOrLoopback()`.
+- Échappement des apostrophes dans la query de recherche de dossier Google Drive (prévention d'injection dans la chaîne `files.list`).
+- Sanitisation étendue des noms de fichiers : suppression des caractères de contrôle (U+0000–U+001F, U+007F), des overrides directionnels Unicode (U+202A–U+202E, U+2066–U+2069), et troncature à 200 caractères avec préservation de l'extension.
+
+### Ajouté
+- Focus trap dans le dialog d'onboarding (Tab/Shift+Tab bouclants) avec nettoyage automatique à la fermeture.
+- Fermeture du dialog d'onboarding par la touche Escape avec restauration du focus vers l'élément précédent.
+- Annonce ARIA accessible lors de la confirmation de déconnexion (`popup_disconnect_confirm_announce`).
+- Throttling des annonces de progression ARIA : mise à jour uniquement à chaque changement de phase ou palier de 10%.
+- Badge d'authentification auth-aware : vérification de l'`accessToken` en `storage.local` pour distinguer « Connecté » (vert) / « Déconnecté » (orange).
+- Nouvelle variable CSS `--status-disconnected` (light + dark) et classe `.status-disconnected` pour le badge « Déconnecté ».
+- Notification `uploadComplete` de secours depuis le background : si le port `sendResponse` est fermé après un long flux auth+upload, la popup reçoit le résultat via un message `runtime.sendMessage` séparé.
+- Clés i18n `popup_auth_disconnected`, `popup_disconnected_status` et `popup_disconnect_confirm_announce` dans les 6 locales.
+- Documentation de la limitation DNS rebinding dans ARCHITECTURE.md §3 (risque accepté).
+
+### Modifié
+- Déconnexion fire-and-forget : la révocation du token OAuth2 n'est plus attendue (`await`) par la popup. L'interface se met à jour de manière synchrone.
+- Bouton « Déconnecter » masqué automatiquement lorsque l'utilisateur n'est pas authentifié (caché par défaut dans le HTML).
+- Touch targets du sélecteur de langue conformes (44px minimum) sous `pointer: coarse`.
+- Respect de `prefers-reduced-motion` : désactivation des transitions et animations CSS.
+
 ## [1.9.0] — 2026-06-24
 
 ### Ajouté

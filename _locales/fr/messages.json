@@ -103,5 +103,17 @@
   "err_content_mismatch": {
     "message": "Le serveur a renvoyé une réponse inattendue (page de connexion ?). Essayez d'ouvrir le fichier directement.",
     "description": "Error: downloaded content type doesn't match expected type"
+  },
+  "popup_disconnect_confirm_announce": {
+    "message": "Cliquez à nouveau pour confirmer la déconnexion.",
+    "description": "Accessible announcement when disconnect button enters confirm mode"
+  },
+  "popup_auth_disconnected": {
+    "message": "Déconnecté",
+    "description": "Auth badge label after disconnect"
+  },
+  "popup_disconnected_status": {
+    "message": "Déconnecté. Cliquez sur Envoyer pour vous reconnecter.",
+    "description": "Status message shown after disconnect"
   }
 }

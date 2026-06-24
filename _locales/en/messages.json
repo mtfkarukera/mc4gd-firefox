@@ -103,5 +103,17 @@
   "err_content_mismatch": {
     "message": "The server returned an unexpected response (login page?). Try opening the file directly.",
     "description": "Error: downloaded content type doesn't match expected type"
+  },
+  "popup_disconnect_confirm_announce": {
+    "message": "Click again to confirm disconnection.",
+    "description": "Accessible announcement when disconnect button enters confirm mode"
+  },
+  "popup_auth_disconnected": {
+    "message": "Signed out",
+    "description": "Auth badge label after disconnect"
+  },
+  "popup_disconnected_status": {
+    "message": "Signed out. Click Send to reconnect.",
+    "description": "Status message shown after disconnect"
   }
 }

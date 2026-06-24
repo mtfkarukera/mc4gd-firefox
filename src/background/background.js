@@ -106,7 +106,25 @@ async function getValidToken() {
 }
 
 /**
+ * Vérifie si un tableau de 4 octets correspond à une plage IPv4 privée ou loopback.
+ * @param {number[]|string[]} p — Tableau de 4 entiers (octets IPv4)
+ * @returns {boolean}
+ */
+function isPrivateIPv4Parts(p) {
+  const [p0, p1] = [parseInt(p[0], 10), parseInt(p[1], 10)];
+  if (isNaN(p0) || isNaN(p1)) return false;
+  if (p0 === 127) return true;                          // 127.0.0.0/8 Loopback
+  if (p0 === 10) return true;                           // 10.0.0.0/8 Private
+  if (p0 === 172 && p1 >= 16 && p1 <= 31) return true; // 172.16.0.0/12 Private
+  if (p0 === 192 && p1 === 168) return true;            // 192.168.0.0/16 Private
+  if (p0 === 169 && p1 === 254) return true;            // 169.254.0.0/16 Link-local
+  if (p0 === 0) return true;                            // 0.0.0.0/8 Broadcast
+  return false;
+}
+
+/**
  * Vérifie si l'URL pointe vers une adresse IP loopback, privée ou de réseau local (SSRF).
+ * Couvre aussi les IPv4-mapped IPv6 (::ffff:192.168.1.1).
  * @param {string} urlStr — L'URL à valider
  * @returns {boolean} true si l'adresse est privée, loopback ou locale
  */
@@ -125,32 +143,38 @@ function isPrivateOrLoopback(urlStr) {
       const ipv6 = hostname.slice(1, -1);
       if (ipv6 === "::1" || ipv6 === "0:0:0:0:0:0:0:1") return true;
       // Link-local fe80::/10
-      if (ipv6.startsWith("fe8") || ipv6.startsWith("fe9") || ipv6.startsWith("fea") || ipv6.startsWith("feb")) return true;
+      if (ipv6.startsWith("fe8") || ipv6.startsWith("fe9") ||
+          ipv6.startsWith("fea") || ipv6.startsWith("feb")) return true;
       // Unique Local Address fc00::/7
       if (ipv6.startsWith("fc") || ipv6.startsWith("fd")) return true;
+
+      // IPv4-mapped IPv6 : ::ffff:x.x.x.x ou ::ffff:xxxx:xxxx (H-1)
+      if (ipv6.startsWith("::ffff:")) {
+        const ipv4Part = ipv6.slice(7); // "192.168.1.1" ou "c0a8:0101"
+        if (ipv4Part.includes(".")) {
+          // Format décimal pointé : ::ffff:192.168.1.1
+          return isPrivateIPv4Parts(ipv4Part.split("."));
+        }
+        if (ipv4Part.includes(":")) {
+          // Format hexadécimal : ::ffff:c0a8:0101
+          const hex = ipv4Part.replace(":", "");
+          return isPrivateIPv4Parts([
+            parseInt(hex.slice(0, 2), 16),
+            parseInt(hex.slice(2, 4), 16),
+            parseInt(hex.slice(4, 6), 16),
+            parseInt(hex.slice(6, 8), 16)
+          ]);
+        }
+        return true; // Forme non reconnue → rejeter par précaution
+      }
+
       return false;
     }
 
     // 3. IPv4 (dotted decimal normalisé par new URL)
     const parts = hostname.split(".");
     if (parts.length === 4) {
-      const p0 = parseInt(parts[0], 10);
-      const p1 = parseInt(parts[1], 10);
-
-      if (isNaN(p0) || isNaN(p1)) return false;
-
-      // 127.0.0.0/8 (Loopback)
-      if (p0 === 127) return true;
-      // 10.0.0.0/8 (Private network)
-      if (p0 === 10) return true;
-      // 172.16.0.0/12 (Private network)
-      if (p0 === 172 && p1 >= 16 && p1 <= 31) return true;
-      // 192.168.0.0/16 (Private network)
-      if (p0 === 192 && p1 === 168) return true;
-      // 169.254.0.0/16 (Link-local, ex: metadata cloud provider)
-      if (p0 === 169 && p1 === 254) return true;
-      // 0.0.0.0/8 (Broadcast/Current network)
-      if (p0 === 0) return true;
+      return isPrivateIPv4Parts(parts);
     }
 
     return false;
@@ -327,7 +351,8 @@ async function detectFileFromTab(tab) {
  * @returns {Promise<string|null>} L'ID du dossier ou null
  */
 async function findFolder(token) {
-  const q = `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const safeFolderName = FOLDER_NAME.replace(/'/g, "\\'");
+  const q = `name='${safeFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
   const url =
     "https://www.googleapis.com/drive/v3/files" +
     "?q=" + encodeURIComponent(q) +
@@ -1019,7 +1044,13 @@ async function handleMessage(message) {
 
         scheduleCleanup(tabId, uploadState);
 
-        return { success: true, fileName: result.name, link: finalLink };
+        const response = { success: true, fileName: result.name, link: finalLink };
+        // Notification de secours : si le port sendResponse est fermé (auth longue),
+        // la popup recevra le résultat via cet onMessage séparé.
+        browser.runtime.sendMessage({
+          action: "uploadComplete", ...response
+        }).catch(() => {});
+        return response;
       } catch (e) {
         const errorMsg = errorToI18nMessage(e);
 
@@ -1029,7 +1060,11 @@ async function handleMessage(message) {
 
         scheduleCleanup(tabId, uploadState);
 
-        return { success: false, error: errorMsg };
+        const response = { success: false, error: errorMsg };
+        browser.runtime.sendMessage({
+          action: "uploadComplete", ...response
+        }).catch(() => {});
+        return response;
       }
     }
 

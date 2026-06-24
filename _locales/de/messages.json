@@ -103,5 +103,17 @@
   "err_content_mismatch": {
     "message": "Der Server hat eine unerwartete Antwort zurückgegeben (Anmeldeseite?). Versuchen Sie, die Datei direkt zu öffnen.",
     "description": "Error: downloaded content type doesn't match expected type"
+  },
+  "popup_disconnect_confirm_announce": {
+    "message": "Klicken Sie erneut, um die Abmeldung zu bestätigen.",
+    "description": "Accessible announcement when disconnect button enters confirm mode"
+  },
+  "popup_auth_disconnected": {
+    "message": "Abgemeldet",
+    "description": "Auth badge label after disconnect"
+  },
+  "popup_disconnected_status": {
+    "message": "Abgemeldet. Klicken Sie auf Senden, um sich erneut anzumelden.",
+    "description": "Status message shown after disconnect"
   }
 }

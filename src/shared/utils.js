@@ -96,14 +96,38 @@ export function t(key, substitutions) {
 }
 
 export function getFileNameFromUrl(url, title) {
+  /**
+   * Applique la sanitisation étendue sur un nom de fichier candidat.
+   * 1. Caractères réservés systèmes de fichiers
+   * 2. Caractères de contrôle (U+0000–U+001F, U+007F)
+   * 3. Overrides directionnels Unicode (U+202A–U+202E, U+2066–U+2069, U+200E/F)
+   * 4. Troncature à 200 caractères (extension conservée)
+   */
+  function sanitize(name) {
+    let s = name.replace(/[<>:"/\\|?*]/g, "_"); // Caractères interdits FS
+    s = s.replace(/[\x00-\x1F\x7F]/g, "");      // Caractères de contrôle
+    s = s.replace(/[\u202A-\u202E\u2066-\u2069\u200F\u200E]/g, ""); // Directionnels Unicode
+    if (s.length > 200) {
+      const dot = s.lastIndexOf(".");
+      if (dot > 0 && s.length - dot <= 10) {
+        const ext = s.slice(dot);
+        s = s.slice(0, 200 - ext.length) + ext;
+      } else {
+        s = s.slice(0, 200);
+      }
+    }
+    return s;
+  }
+
   try {
     const parsed = new URL(url);
-    const lastPart = parsed.pathname.split('/').pop();
-    if (lastPart && lastPart.includes('.')) {
-      const ext = lastPart.split('.').pop().toLowerCase();
+    const lastPart = parsed.pathname.split("/").pop();
+    if (lastPart && lastPart.includes(".")) {
+      const ext = lastPart.split(".").pop().toLowerCase();
       if (MIME_MAP[ext]) {
         const decoded = decodeURIComponent(lastPart);
-        return decoded.replace(/[<>:"/\\|?*]/g, '_');
+        const sanitized = sanitize(decoded);
+        if (sanitized) return sanitized;
       }
     }
   } catch (e) {
@@ -111,10 +135,8 @@ export function getFileNameFromUrl(url, title) {
   }
 
   if (title) {
-    const cleanTitle = title.replace(/[<>:"/\\|?*]/g, '_').trim();
-    if (cleanTitle) {
-      return cleanTitle;
-    }
+    const sanitized = sanitize(title.trim());
+    if (sanitized) return sanitized;
   }
 
   return "file";

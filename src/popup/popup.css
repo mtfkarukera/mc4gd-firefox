@@ -28,6 +28,7 @@
   --status-error: #d93025;
   --error-hover: #b71c1c;
   --status-loading: #fbbc04;
+  --status-disconnected: #e37400;
 
   --bg-element: #fff;
   --btn-text: #fff;
@@ -70,6 +71,7 @@
     --status-error: #f28b82;
     --error-hover: #d93025;
     --status-loading: #fde293;
+    --status-disconnected: #f2a455;
 
     --bg-element: #292a2d;
     --btn-text: #202124;
@@ -149,6 +151,13 @@ body::after {
   }
   .spinner {
     animation: none;
+  }
+  /* Désactiver toutes les transitions non essentielles (A-06) */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
 
@@ -234,9 +243,10 @@ header, section, footer {
   transition: background-color 0.3s ease;
 }
 
-.status-loading { background-color: var(--status-loading); color: var(--badge-text-loading); }
-.status-success { background-color: var(--status-success); }
-.status-error   { background-color: var(--status-error); }
+.status-loading      { background-color: var(--status-loading); color: var(--badge-text-loading); }
+.status-success      { background-color: var(--status-success); }
+.status-error        { background-color: var(--status-error); }
+.status-disconnected { background-color: var(--status-disconnected); color: #fff; }
 
 /* ----------------------------------------------------------
    SECTION FICHIER
@@ -423,6 +433,12 @@ footer {
 @media (pointer: coarse) {
   .primary-btn { padding: 16px; font-size: 15px; }
   .close-btn { padding: 14px; font-size: 14px; }
+  /* Zone de toucher minimale 44px pour le sélecteur de langue (A-04) */
+  #lang-select {
+    padding: 10px 12px;
+    font-size: 14px;
+    min-height: 44px;
+  }
 }
 
 /* ----------------------------------------------------------
