@@ -236,6 +236,39 @@ async function fetchDriveWithRetry(url, options = {}, retries = 3, delay = 1000)
 }
 
 /**
+ * Centralise la récupération de l'onglet actif dans la fenêtre courante.
+ * @returns {Promise<Object|null>} L'onglet actif ou null
+ */
+async function getActiveTab() {
+  try {
+    const tabs = await browser.tabs.query({ currentWindow: true, active: true });
+    return tabs[0] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Vérifie si la réponse de l'API Drive est en erreur, et lève une exception typée si c'est le cas.
+ * @param {Response} res — Objet Response de fetch
+ * @param {boolean} isUploadInit — Vrai s'il s'agit de l'init de l'upload résumable (404 signifie RETRY_404)
+ */
+async function throwIfDriveError(res, isUploadInit = false) {
+  if (res.ok) return;
+  const status = res.status;
+  if (status === 401) throw new Error("RETRY_401");
+  if (status === 404) {
+    if (isUploadInit) throw new Error("RETRY_404");
+    throw new Error(`DRIVE_API_ERROR_HTTP_404`);
+  }
+  if (status === 403) {
+    await parseAndThrowDriveError(res);
+  }
+  if (status >= 500) throw new Error("GOOGLE_SERVER_ERROR");
+  throw new Error(`DRIVE_API_ERROR_HTTP_${status}`);
+}
+
+/**
  * Analyse une réponse d'erreur de l'API Drive pour lancer une exception typée.
  */
 async function parseAndThrowDriveError(res) {
@@ -364,15 +397,8 @@ async function findFolder(token) {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-  if (!res.ok) {
-    const status = res.status;
-    if (status === 401) throw new Error("RETRY_401");
-    if (status === 403) {
-      await parseAndThrowDriveError(res);
-    }
-    if (status >= 500) throw new Error("GOOGLE_SERVER_ERROR");
-    throw new Error(`DRIVE_API_ERROR_HTTP_${status}`);
-  }
+  await throwIfDriveError(res);
+
 
   const data = await res.json();
   return data.files?.[0]?.id ?? null;
@@ -391,15 +417,8 @@ async function createFolder(token) {
     })
   });
 
-  if (!res.ok) {
-    const status = res.status;
-    if (status === 401) throw new Error("RETRY_401");
-    if (status === 403) {
-      await parseAndThrowDriveError(res);
-    }
-    if (status >= 500) throw new Error("GOOGLE_SERVER_ERROR");
-    throw new Error(`DRIVE_API_ERROR_HTTP_${status}`);
-  }
+  await throwIfDriveError(res);
+
 
   const data = await res.json();
   if (!data.id) {
@@ -603,12 +622,8 @@ async function initiateResumableSession(fileName, mimeType, fileSize, token, fol
     }
   );
 
-  if (!initRes.ok) {
-    const status = initRes.status;
-    if (status === 401) throw new Error("RETRY_401");
-    if (status === 404) throw new Error("RETRY_404");
-    await parseAndThrowDriveError(initRes);
-  }
+  await throwIfDriveError(initRes, true);
+
 
   const sessionUrl = initRes.headers.get("Location");
   if (!sessionUrl) {
@@ -863,7 +878,8 @@ async function disconnect() {
 // ----------------------------------------------------------
 
 const ERROR_I18N_MAP = {
-  FILE_TOO_LARGE: "err_file_too_large_50",
+  FILE_TOO_LARGE: "err_file_too_large",
+
   TIMEOUT: "err_timeout",
   RATE_LIMIT_EXCEEDED: "err_rate_limit",
   GOOGLE_SERVER_ERROR: "err_google_server",
@@ -895,6 +911,88 @@ function errorToI18nMessage(e) {
   return t("err_upload_failed");
 }
 
+/**
+ * Gère le processus d'upload du fichier de l'onglet actif.
+ * @param {Object} tab — L'onglet actif
+ * @returns {Promise<Object>} Résultat de l'upload
+ */
+async function handleUploadCurrentFile(tab) {
+  if (!tab || !tab.url) {
+    return { success: false, error: "No active tab" };
+  }
+  const tabId = tab.id;
+
+  // T-02 (F-05) — Garde anti-double upload
+  if (activeUploads[tabId]) {
+    return { success: false, error: t("err_upload_in_progress") };
+  }
+
+  // Détection du format
+  const detection = await detectFileFromTab(tab);
+  if (!detection.supported) {
+    let errorKey = "err_unsupported_type";
+    if (detection.reason === "local_file") errorKey = "err_local_file";
+    if (detection.reason === "private_network") errorKey = "err_private_network";
+    if (detection.reason === "file_too_large") errorKey = "err_file_too_large";
+    return { success: false, error: t(errorKey) };
+  }
+
+  // Initialiser le suivi du transfert en arrière-plan
+  const uploadState = {
+    tabId,
+    phase: "downloading",
+    percent: 0,
+    fileName: detection.fileName,
+    mimeType: detection.mimeType,
+    url: tab.url,
+    sessionUrl: null,
+    bytesUploaded: 0,
+    totalSize: 0,
+    controller: null,       // AbortController pour le download
+    uploadController: null, // AbortController pour l'upload chunké
+    link: null,
+    error: null,
+    startedAt: Date.now()
+  };
+  activeUploads[tabId] = uploadState;
+
+  // Persister l'état initial
+  await persistUploadState(uploadState);
+
+  try {
+    const result = await uploadWithRetry(tab.url, detection.fileName, detection.mimeType, tabId, uploadState);
+
+    const finalLink = result.webViewLink;
+    uploadState.phase = "success";
+    uploadState.link = finalLink;
+    await persistUploadState(uploadState);
+
+    scheduleCleanup(tabId, uploadState);
+
+    const response = { success: true, fileName: result.name, link: finalLink };
+    // Notification de secours : si le port sendResponse est fermé (auth longue),
+    // la popup recevra le résultat via cet onMessage séparé.
+    browser.runtime.sendMessage({
+      action: "uploadComplete", ...response
+    }).catch(() => {});
+    return response;
+  } catch (e) {
+    const errorMsg = errorToI18nMessage(e);
+
+    uploadState.phase = "error";
+    uploadState.error = errorMsg;
+    await persistUploadState(uploadState);
+
+    scheduleCleanup(tabId, uploadState);
+
+    const response = { success: false, error: errorMsg };
+    browser.runtime.sendMessage({
+      action: "uploadComplete", ...response
+    }).catch(() => {});
+    return response;
+  }
+}
+
 // ----------------------------------------------------------
 // ROUTEUR DE MESSAGES — handleMessage
 // ----------------------------------------------------------
@@ -914,158 +1012,72 @@ async function handleMessage(message) {
       return { url: browser.identity.getRedirectURL() };
 
     case "getTabStatus": {
-      try {
-        const tabs = await browser.tabs.query({ currentWindow: true, active: true });
-        const tab = tabs[0];
-        if (!tab || !tab.url) {
-          return { supported: false, reason: "system_page" };
-        }
-        return await detectFileFromTab(tab);
-      } catch (e) {
+      const tab = await getActiveTab();
+      if (!tab || !tab.url) {
         return { supported: false, reason: "system_page" };
       }
+      return await detectFileFromTab(tab);
     }
 
     case "getUploadStatus": {
-      try {
-        const tabs = await browser.tabs.query({ currentWindow: true, active: true });
-        const tab = tabs[0];
-        if (!tab) return null;
+      const tab = await getActiveTab();
+      if (!tab) return null;
 
-        // Vérifier l'état en mémoire d'abord
-        let uploadState = activeUploads[tab.id];
+      // Vérifier l'état en mémoire d'abord
+      let uploadState = activeUploads[tab.id];
 
-        // T-12 — Fallback vers storage.local si le background a été redémarré
-        if (!uploadState) {
-          const { activeUpload } = await browser.storage.local.get("activeUpload");
-          if (activeUpload && activeUpload.tabId === tab.id) {
-            uploadState = activeUpload;
-          }
+      // T-12 — Fallback vers storage.local si le background a été redémarré
+      if (!uploadState) {
+        const { activeUpload } = await browser.storage.local.get("activeUpload");
+        if (activeUpload && activeUpload.tabId === tab.id) {
+          uploadState = activeUpload;
         }
-
-        if (!uploadState) return null;
-
-        const result = {
-          phase: uploadState.phase,
-          percent: uploadState.percent,
-          fileName: uploadState.fileName,
-          mimeType: uploadState.mimeType,
-          link: uploadState.link,
-          error: uploadState.error
-        };
-
-        // Si l'envoi a fini ou est en échec, on vide l'état après lecture
-        if (uploadState.phase === "success" || uploadState.phase === "error") {
-          delete activeUploads[tab.id];
-          clearPersistedUploadState().catch(() => {});
-        }
-        return result;
-      } catch (e) {
-        return null;
       }
+
+      if (!uploadState) return null;
+
+      const result = {
+        phase: uploadState.phase,
+        percent: uploadState.percent,
+        fileName: uploadState.fileName,
+        mimeType: uploadState.mimeType,
+        link: uploadState.link,
+        error: uploadState.error
+      };
+
+      // Si l'envoi a fini ou est en échec, on vide l'état après lecture
+      if (uploadState.phase === "success" || uploadState.phase === "error") {
+        delete activeUploads[tab.id];
+        clearPersistedUploadState().catch(() => {});
+      }
+      return result;
     }
 
     case "cancelUpload": {
-      try {
-        const tabs = await browser.tabs.query({ currentWindow: true, active: true });
-        const tab = tabs[0];
-        if (!tab) return { success: false };
-        const uploadState = activeUploads[tab.id];
-        if (uploadState) {
-          // Abort download controller
-          if (uploadState.controller) {
-            uploadState.controller.abort();
-          }
-          // Abort upload controller (remplace l'ancien xhr.abort)
-          if (uploadState.uploadController) {
-            uploadState.uploadController.abort();
-          }
-          delete activeUploads[tab.id];
-          clearPersistedUploadState().catch(() => {});
+      const tab = await getActiveTab();
+      if (!tab) return { success: false };
+      const uploadState = activeUploads[tab.id];
+      if (uploadState) {
+        // Abort download controller
+        if (uploadState.controller) {
+          uploadState.controller.abort();
         }
-        return { success: true };
-      } catch (e) {
-        return { success: false };
+        // Abort upload controller (remplace l'ancien xhr.abort)
+        if (uploadState.uploadController) {
+          uploadState.uploadController.abort();
+        }
+        delete activeUploads[tab.id];
+        clearPersistedUploadState().catch(() => {});
       }
+      return { success: true };
     }
 
     case "uploadCurrentFile": {
-      const tabs = await browser.tabs.query({ currentWindow: true, active: true });
-      const tab = tabs[0];
+      const tab = await getActiveTab();
       if (!tab) {
         return { success: false, error: "No active tab" };
       }
-      const tabId = tab.id;
-
-      // T-02 (F-05) — Garde anti-double upload
-      if (activeUploads[tabId]) {
-        return { success: false, error: t("err_upload_in_progress") };
-      }
-
-      // Détection du format
-      const detection = await detectFileFromTab(tab);
-      if (!detection.supported) {
-        let errorKey = "err_unsupported_type";
-        if (detection.reason === "local_file") errorKey = "err_local_file";
-        if (detection.reason === "private_network") errorKey = "err_private_network";
-        if (detection.reason === "file_too_large") errorKey = "err_file_too_large_50";
-        return { success: false, error: t(errorKey) };
-      }
-
-      // Initialiser le suivi du transfert en arrière-plan
-      const uploadState = {
-        tabId,
-        phase: "downloading",
-        percent: 0,
-        fileName: detection.fileName,
-        mimeType: detection.mimeType,
-        url: tab.url,
-        sessionUrl: null,
-        bytesUploaded: 0,
-        totalSize: 0,
-        controller: null,       // AbortController pour le download
-        uploadController: null, // AbortController pour l'upload chunké
-        link: null,
-        error: null,
-        startedAt: Date.now()
-      };
-      activeUploads[tabId] = uploadState;
-
-      // Persister l'état initial
-      await persistUploadState(uploadState);
-
-      try {
-        const result = await uploadWithRetry(tab.url, detection.fileName, detection.mimeType, tabId, uploadState);
-
-        const finalLink = result.webViewLink;
-        uploadState.phase = "success";
-        uploadState.link = finalLink;
-        await persistUploadState(uploadState);
-
-        scheduleCleanup(tabId, uploadState);
-
-        const response = { success: true, fileName: result.name, link: finalLink };
-        // Notification de secours : si le port sendResponse est fermé (auth longue),
-        // la popup recevra le résultat via cet onMessage séparé.
-        browser.runtime.sendMessage({
-          action: "uploadComplete", ...response
-        }).catch(() => {});
-        return response;
-      } catch (e) {
-        const errorMsg = errorToI18nMessage(e);
-
-        uploadState.phase = "error";
-        uploadState.error = errorMsg;
-        await persistUploadState(uploadState);
-
-        scheduleCleanup(tabId, uploadState);
-
-        const response = { success: false, error: errorMsg };
-        browser.runtime.sendMessage({
-          action: "uploadComplete", ...response
-        }).catch(() => {});
-        return response;
-      }
+      return await handleUploadCurrentFile(tab);
     }
 
     case "disconnect":

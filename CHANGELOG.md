@@ -5,6 +5,22 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.11.0] — 2026-06-24
+
+### Refactorisé
+- Centralisation de la récupération de l'onglet actif avec `getActiveTab()` dans `background.js` (suppression de 4 blocs de `tabs.query`).
+- Unification de la gestion des erreurs d'API Drive avec la fonction d'aide asynchrone `throwIfDriveError()`, éliminant les duplications dans `findFolder`, `createFolder` et `initiateResumableSession`.
+- Extraction de la logique `"uploadCurrentFile"` hors du switch de `handleMessage` vers la fonction dédiée `handleUploadCurrentFile(tab)`.
+
+### Modifié
+- Badge d'authentification entièrement découplé de la validité de l'onglet : le badge affiche "Connecté" ou "Déconnecté" de manière fiable sur toutes les pages (y compris `about:debugging` ou `file://`), et le bouton "Déconnecter" reste disponible.
+- Remplacement du gradient de couleur de la barre de progression codé en dur par la variable CSS `--progress-gradient` dans `popup.css`, avec prise en charge du thème sombre (gradient plus doux).
+- Localisation complète des options du sélecteur de langue ("Auto" et "Kréyòl") via `data-i18n` dans les 6 locales.
+- Renommage de la clé de traduction trompeuse `err_file_too_large_50` en `err_file_too_large` pour refléter la limite réelle de 200 Mo.
+
+### Ajouté
+- Élément titre `<h1>` invisible (`.sr-only`) dans `popup.html` pour se conformer aux exigences WCAG de hiérarchie des titres.
+
 ## [1.10.0] — 2026-06-24
 
 ### Sécurité

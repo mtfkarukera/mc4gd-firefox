@@ -92,7 +92,7 @@
     "message": "Đã hủy tải lên.",
     "description": "Error: upload cancelled by user"
   },
-  "err_file_too_large_50": {
+  "err_file_too_large": {
     "message": "Tệp quá lớn (kích thước tối đa là 200 MB).",
     "description": "Error: file exceeds 200MB limit"
   },
@@ -115,5 +115,13 @@
   "popup_disconnected_status": {
     "message": "Đã đăng xuất. Nhấn Gửi để kết nối lại.",
     "description": "Status message shown after disconnect"
+  },
+  "lang_auto": {
+    "message": "Tự động",
+    "description": "Language selection: automatic"
+  },
+  "lang_gcf": {
+    "message": "Kréyòl",
+    "description": "Language selection: Guadeloupean Creole"
   }
 }

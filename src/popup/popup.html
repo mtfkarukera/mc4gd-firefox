@@ -13,14 +13,15 @@
 
   <!-- HEADER -->
   <header class="app-header">
+    <h1 class="sr-only" data-i18n="ext_name"></h1>
     <div class="logo">
       <img class="logo-icon" src="../../icons/icon.svg" alt="Logo" aria-hidden="true" />
       <span data-i18n="ext_name"></span>
     </div>
     <div id="auth-status" class="status-badge status-loading" data-i18n="popup_auth_loading" aria-live="polite"></div>
     <select id="lang-select" data-i18n-aria-label="lang_select_label">
-      <option value="auto">Auto</option>
-      <option value="gcf">Kréyòl</option>
+      <option value="auto" data-i18n="lang_auto">Auto</option>
+      <option value="gcf" data-i18n="lang_gcf">Kréyòl</option>
     </select>
   </header>
 

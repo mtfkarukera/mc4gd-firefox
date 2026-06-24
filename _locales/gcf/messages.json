@@ -123,7 +123,7 @@
   "err_upload_aborted": {
     "message": "Voyaj-la annilé."
   },
-  "err_file_too_large_50": {
+  "err_file_too_large": {
     "message": "Fichyé-la twò gwo (maksimòm sé 200 Mo)."
   },
   "err_upload_in_progress": {
@@ -145,5 +145,11 @@
   "popup_disconnected_status": {
     "message": "Dékonetè. Klik Anvoyé pou konektè ankò.",
     "description": "Status message shown after disconnect"
+  },
+  "lang_auto": {
+    "message": "Auto"
+  },
+  "lang_gcf": {
+    "message": "Kréyòl"
   }
 }

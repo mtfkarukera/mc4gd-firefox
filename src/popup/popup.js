@@ -211,6 +211,24 @@ async function initTabStatus() {
   setAuthBadge("loading", t("popup_auth_loading"));
   setStatusLive(t("popup_detecting"));
 
+  // 1. Déterminer et mettre à jour le statut d'authentification
+  let hasToken = false;
+  try {
+    const { accessToken } = await browser.storage.local.get("accessToken");
+    if (accessToken) {
+      setAuthBadge("success", t("popup_auth_connected"));
+      updateDisconnectVisibility(true);
+      hasToken = true;
+    } else {
+      setAuthBadge("disconnected", t("popup_auth_disconnected"));
+      updateDisconnectVisibility(false);
+    }
+  } catch (e) {
+    setAuthBadge("error", t("popup_auth_error"));
+    updateDisconnectVisibility(false);
+  }
+
+  // 2. Déterminer l'éligibilité du fichier sur l'onglet actif
   try {
     const result = await browser.runtime.sendMessage({ action: "getTabStatus" });
 
@@ -218,24 +236,15 @@ async function initTabStatus() {
       fileIcon.textContent = getIconForMime(result.mimeType);
       fileName.textContent = result.fileName;
       fileInfo.classList.remove("warning");
-
-      // Vérifier si l'utilisateur est authentifié (accessToken en storage)
-      const { accessToken } = await browser.storage.local.get("accessToken");
-      if (accessToken) {
-        setAuthBadge("success", t("popup_auth_connected"));
-        setStatusLive(t("popup_idle_label"));
-        updateDisconnectVisibility(true);
-      } else {
-        setAuthBadge("disconnected", t("popup_auth_disconnected"));
-        setStatusLive(t("popup_disconnected_status"));
-        updateDisconnectVisibility(false);
-      }
       uploadBtn.disabled = false;
-
+      if (hasToken) {
+        setStatusLive(t("popup_idle_label"));
+      } else {
+        setStatusLive(t("popup_disconnected_status"));
+      }
     } else {
       fileInfo.classList.add("warning");
       uploadBtn.disabled = true;
-      updateDisconnectVisibility(false);
 
       if (result.reason === "local_file") {
         fileName.textContent = t("popup_local_file");
@@ -245,7 +254,7 @@ async function initTabStatus() {
         setStatusLive(t("err_private_network"));
       } else if (result.reason === "file_too_large") {
         fileName.textContent = t("popup_unsupported");
-        setStatusLive(t("err_file_too_large_50"));
+        setStatusLive(t("err_file_too_large"));
       } else if (result.reason === "system_page") {
         fileName.textContent = t("popup_unsupported");
         setStatusLive(t("popup_unsupported"));
@@ -253,16 +262,11 @@ async function initTabStatus() {
         fileName.textContent = t("popup_no_file");
         setStatusLive(t("popup_unsupported"));
       }
-
-      setAuthBadge("error", t("popup_auth_error"));
     }
-
   } catch (e) {
     fileInfo.classList.add("warning");
     fileName.textContent = t("popup_no_file");
-    setAuthBadge("error", t("popup_auth_error"));
     setStatusLive(t("err_network"));
-    updateDisconnectVisibility(false);
   }
 }
 

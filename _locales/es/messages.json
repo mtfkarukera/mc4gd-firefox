@@ -92,7 +92,7 @@
     "message": "Carga cancelada.",
     "description": "Error: upload cancelled by user"
   },
-  "err_file_too_large_50": {
+  "err_file_too_large": {
     "message": "El archivo es demasiado grande (el tamaño máximo es de 200 MB).",
     "description": "Error: file exceeds 200MB limit"
   },
@@ -115,5 +115,13 @@
   "popup_disconnected_status": {
     "message": "Desconectado. Haga clic en Enviar para volver a conectarse.",
     "description": "Status message shown after disconnect"
+  },
+  "lang_auto": {
+    "message": "Auto",
+    "description": "Language selection: automatic"
+  },
+  "lang_gcf": {
+    "message": "Kréyòl",
+    "description": "Language selection: Guadeloupean Creole"
   }
 }

@@ -92,7 +92,7 @@
     "message": "Upload abgebrochen.",
     "description": "Error: upload cancelled by user"
   },
-  "err_file_too_large_50": {
+  "err_file_too_large": {
     "message": "Die Datei ist zu groß (die maximale Größe beträgt 200 MB).",
     "description": "Error: file exceeds 200MB limit"
   },
@@ -115,5 +115,13 @@
   "popup_disconnected_status": {
     "message": "Abgemeldet. Klicken Sie auf Senden, um sich erneut anzumelden.",
     "description": "Status message shown after disconnect"
+  },
+  "lang_auto": {
+    "message": "Auto",
+    "description": "Language selection: automatic"
+  },
+  "lang_gcf": {
+    "message": "Kréyòl",
+    "description": "Language selection: Guadeloupean Creole"
   }
 }
