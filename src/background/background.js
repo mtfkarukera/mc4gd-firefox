@@ -510,11 +510,13 @@ function scheduleCleanup(tabId, uploadState) {
  * Notifie la popup ouverte d'un changement d'état d'upload.
  * Silencieusement ignoré si la popup est fermée.
  */
-function notifyPopup(phase, percent) {
+function notifyPopup(phase, percent, bytesTransferred = 0, totalBytes = 0) {
   browser.runtime.sendMessage({
     action: "uploadProgress",
     phase,
-    percent
+    percent,
+    bytesTransferred,
+    totalBytes
   }).catch(() => {});
 }
 
@@ -532,65 +534,88 @@ function notifyPopup(phase, percent) {
  * @param {Object} uploadState - État mutable du transfert
  * @returns {Promise<Blob>} Le contenu du fichier sous forme de Blob
  */
-async function downloadFileWithProgress(url, expectedMimeType, tabId, uploadState) {
+async function downloadFileWithProgress(url, expectedMimeType, tabId, uploadState, retries = 3, delay = 2000) {
   const controller = new AbortController();
   uploadState.controller = controller;
 
   // Auto-timeout for stalled downloads
   const downloadTimeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
 
-  const res = await fetch(url, { signal: controller.signal });
-  if (!res.ok) {
-    clearTimeout(downloadTimeout);
-    throw new Error(`DOWNLOAD_FAILED_HTTP_${res.status}`);
-  }
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) {
+      const status = res.status;
+      // Réessayer uniquement si c'est une erreur réseau temporaire (429, 5xx)
+      if ((status === 429 || (status >= 500 && status < 600)) && retries > 0) {
+        clearTimeout(downloadTimeout);
+        console.warn(`Source download returned ${status}. Retrying in ${delay}ms... (Remaining retries: ${retries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return downloadFileWithProgress(url, expectedMimeType, tabId, uploadState, retries - 1, delay * 2);
+      }
+      clearTimeout(downloadTimeout);
+      throw new Error(`DOWNLOAD_FAILED_HTTP_${res.status}`);
+    }
 
-  // T-03 (F-06) — Valider le Content-Type de la réponse
-  const responseType = (res.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
-  const htmlTypes = ["text/html", "application/xhtml+xml"];
-  if (htmlTypes.includes(responseType) && !htmlTypes.includes(expectedMimeType)) {
-    clearTimeout(downloadTimeout);
-    throw new Error("CONTENT_TYPE_MISMATCH");
-  }
+    // T-03 (F-06) — Valider le Content-Type de la réponse
+    const responseType = (res.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
+    const htmlTypes = ["text/html", "application/xhtml+xml"];
+    if (htmlTypes.includes(responseType) && !htmlTypes.includes(expectedMimeType)) {
+      clearTimeout(downloadTimeout);
+      throw new Error("CONTENT_TYPE_MISMATCH");
+    }
 
-  const contentLengthHeader = res.headers.get("Content-Length");
-  const totalSize = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+    const contentLengthHeader = res.headers.get("Content-Length");
+    const totalSize = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
 
-  if (totalSize > MAX_FILE_SIZE) {
-    clearTimeout(downloadTimeout);
-    throw new Error("FILE_TOO_LARGE");
-  }
-
-  const reader = res.body.getReader();
-  let receivedLength = 0;
-  const chunks = [];
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    chunks.push(value);
-    receivedLength += value.length;
-
-    if (receivedLength > MAX_FILE_SIZE) {
+    if (totalSize > MAX_FILE_SIZE) {
       clearTimeout(downloadTimeout);
       throw new Error("FILE_TOO_LARGE");
     }
 
-    const percent = totalSize ? Math.round((receivedLength / totalSize) * 100) : 0;
-    uploadState.percent = percent;
+    const reader = res.body.getReader();
+    let receivedLength = 0;
+    const chunks = [];
 
-    // Notifier la popup ouverte
-    notifyPopup("downloading", percent);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      chunks.push(value);
+      receivedLength += value.length;
+
+      if (receivedLength > MAX_FILE_SIZE) {
+        clearTimeout(downloadTimeout);
+        throw new Error("FILE_TOO_LARGE");
+      }
+
+      const percent = totalSize ? Math.round((receivedLength / totalSize) * 100) : 0;
+      uploadState.percent = percent;
+      uploadState.bytesUploaded = receivedLength;
+      uploadState.totalSize = totalSize;
+
+      // Notifier la popup ouverte
+      notifyPopup("downloading", percent, receivedLength, totalSize);
+    }
+
+    clearTimeout(downloadTimeout);
+
+    // T-07 — Construire le Blob puis libérer les chunks immédiatement
+    const blob = new Blob(chunks);
+    chunks.length = 0; // Libère les références pour le GC
+
+    return blob;
+  } catch (error) {
+    clearTimeout(downloadTimeout);
+    // Réessayer sur erreur réseau générique (TypeError) ou si c'est un timeout interne,
+    // mais pas sur AbortError de l'utilisateur (le signal a été avorté par l'utilisateur ou la fermeture).
+    // Si l'utilisateur clique sur Annuler, signal.aborted est vrai et l'erreur est AbortError.
+    if (error.name !== "AbortError" && error.message !== "TIMEOUT" && retries > 0) {
+      console.warn(`Source download failed: ${error.message}. Retrying in ${delay}ms... (Remaining retries: ${retries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return downloadFileWithProgress(url, expectedMimeType, tabId, uploadState, retries - 1, delay * 2);
+    }
+    throw error;
   }
-
-  clearTimeout(downloadTimeout);
-
-  // T-07 — Construire le Blob puis libérer les chunks immédiatement
-  const blob = new Blob(chunks);
-  chunks.length = 0; // Libère les références pour le GC
-
-  return blob;
 }
 
 // ----------------------------------------------------------
@@ -771,7 +796,7 @@ async function uploadChunked(fileBlob, sessionUrl, mimeType, startByte, uploadSt
     uploadState.percent = percent;
 
     // Notifier la popup
-    notifyPopup("uploading", percent);
+    notifyPopup("uploading", percent, offset, totalSize);
 
     // Persister l'état après chaque chunk (T-09)
     persistUploadState(uploadState).catch(() => {});
@@ -811,7 +836,19 @@ async function uploadFileResumable(fileBlob, fileName, mimeType, token, folderId
  */
 async function uploadWithRetry(url, fileName, mimeType, tabId, uploadState) {
   let token = await getValidToken();
-  let folderId = await getOrCreateFolder(token);
+  let folderId;
+
+  try {
+    folderId = await getOrCreateFolder(token);
+  } catch (err) {
+    if (err.message === "RETRY_401") {
+      await browser.storage.local.remove(["accessToken", "expiresAt"]);
+      token = await getValidToken();
+      folderId = await getOrCreateFolder(token);
+    } else {
+      throw err;
+    }
+  }
 
   let fileBlob;
   try {
@@ -839,6 +876,7 @@ async function uploadWithRetry(url, fileName, mimeType, tabId, uploadState) {
     if (err.message === "RETRY_401") {
       await browser.storage.local.remove(["accessToken", "expiresAt"]);
       token = await getValidToken();
+      folderId = await getOrCreateFolder(token);
       return await uploadFileResumable(fileBlob, fileName, mimeType, token, folderId, tabId, uploadState);
     }
     // Retry unique sur dossier supprimé
@@ -1122,6 +1160,39 @@ browser.tabs.onRemoved.addListener((tabId) => {
   }
   delete activeUploads[tabId];
   clearPersistedUploadState().catch(() => {});
+});
+
+// ----------------------------------------------------------
+// NETTOYAGE AUTOMATIQUE — NAVIGATION D'ONGLET
+// ----------------------------------------------------------
+
+browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) {
+    const uploadState = activeUploads[tabId];
+    if (!uploadState) return;
+
+    // Ne rien faire si c'est la même URL (ou juste un hash change)
+    try {
+      const oldUrl = new URL(uploadState.url);
+      const newUrl = new URL(changeInfo.url);
+      if (oldUrl.origin === newUrl.origin && oldUrl.pathname === newUrl.pathname && oldUrl.search === newUrl.search) {
+        return;
+      }
+    } catch (e) {
+      // Ignorer l'erreur d'URL
+    }
+
+    console.warn(`Tab ${tabId} navigated to new URL. Aborting transfer.`);
+
+    if (uploadState.controller) {
+      uploadState.controller.abort();
+    }
+    if (uploadState.uploadController) {
+      uploadState.uploadController.abort();
+    }
+    delete activeUploads[tabId];
+    clearPersistedUploadState().catch(() => {});
+  }
 });
 
 // ----------------------------------------------------------

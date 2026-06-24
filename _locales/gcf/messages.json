@@ -9,7 +9,7 @@
     "message": "An ka gadé paj-la…"
   },
   "popup_idle_label": {
-    "message": "An détèkté on pyès nou pé voyé"
+    "message": "FICHIER DÉTECTÉ"
   },
   "popup_no_file": {
     "message": "Pa ni pon pyès pou nou jwenn la"
@@ -25,9 +25,6 @@
   },
   "popup_btn_uploading": {
     "message": "An ka voyé'y…"
-  },
-  "popup_uploading_label": {
-    "message": "I ka chajé…"
   },
   "popup_success": {
     "message": "$FILE_NAME$ pati !",
@@ -72,7 +69,7 @@
     "message": "Pwoblèm rézo. Gadé si ou ni on bon konèksyon."
   },
   "err_upload_failed": {
-    "message": "Pyès-la pa rivé pati. Éséyé ankò souplé."
+    "message": "Voyaj-la pa rivé fèt. Éséyé ankò souplé."
   },
   "lang_select_label": {
     "message": "Lang"
@@ -101,10 +98,27 @@
   "onboarding_btn_ok": {
     "message": "Kòmansé"
   },
+  "onboarding_feat_formats": {
+    "message": "I ka sipòté PDF, foto, son, vidéo, EPUB é fichié Office."
+  },
+  "onboarding_feat_destination": {
+    "message": "I ka sere fichyé-la dirèkteman adan fòldè \"Imports Magic Clipper\" an Google Drive a-w."
+  },
+  "onboarding_feat_security": {
+    "message": "100% lokal é an sekirite : oken sèvè dèwò, koneksyon dirèk èvè Google OAuth2."
+  },
   "popup_state_downloading": {
     "message": "An ka chajé fichyé-la… ($PERCENT$%)",
     "placeholders": {
       "percent": { "content": "$1" }
+    }
+  },
+  "popup_state_downloading_eta": {
+    "message": "An ka chajé fichyé-la… ($PERCENT$%) — i ka rété $ETA$ ($SPEED$)",
+    "placeholders": {
+      "percent": { "content": "$1" },
+      "eta": { "content": "$2" },
+      "speed": { "content": "$3" }
     }
   },
   "popup_state_uploading": {
@@ -112,6 +126,17 @@
     "placeholders": {
       "percent": { "content": "$1" }
     }
+  },
+  "popup_state_uploading_eta": {
+    "message": "Fichyé-la ka pati an Drive… ($PERCENT$%) — i ka rété $ETA$ ($SPEED$)",
+    "placeholders": {
+      "percent": { "content": "$1" },
+      "eta": { "content": "$2" },
+      "speed": { "content": "$3" }
+    }
+  },
+  "popup_state_action_cancel_announce": {
+    "message": "Ou pé annilé voyaj-la si ou vlé."
   },
   "popup_btn_cancel": {
     "message": "❌ Annilé"

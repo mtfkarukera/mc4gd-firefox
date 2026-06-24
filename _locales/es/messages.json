@@ -13,7 +13,6 @@
   "popup_btn_uploading": { "message": "Enviando…", "description": "Upload button text when sending" },
   "popup_btn_disconnect": { "message": "Desconectar", "description": "Disconnect button text" },
   "popup_btn_disconnect_confirm": { "message": "Confirmar desconexión", "description": "Disconnect button confirmation state" },
-  "popup_uploading_label": { "message": "Carga en curso…", "description": "Label during upload" },
   "popup_link_view": { "message": "📂 Ver en Google Drive", "description": "Link to view the uploaded file" },
   "popup_success": {
     "message": "¡$FILE_NAME$ enviado!",
@@ -66,11 +65,32 @@
     "message": "Comenzar",
     "description": "Onboarding button text"
   },
+  "onboarding_feat_formats": {
+    "message": "Soporta PDF, imágenes, audio, video, EPUB y documentos de Office.",
+    "description": "Supported formats list item"
+  },
+  "onboarding_feat_destination": {
+    "message": "Guarda archivos directamente en la carpeta \"Imports Magic Clipper\" en tu Google Drive.",
+    "description": "Google Drive folder destination list item"
+  },
+  "onboarding_feat_security": {
+    "message": "100% local y seguro: sin servidores de terceros, conexión directa con Google OAuth2.",
+    "description": "Direct auth and privacy list item"
+  },
   "popup_state_downloading": {
     "message": "Descargando… ($PERCENT$%)",
     "description": "Progress state: downloading from web",
     "placeholders": {
       "percent": { "content": "$1" }
+    }
+  },
+  "popup_state_downloading_eta": {
+    "message": "Descargando… ($PERCENT$%) — quedan $ETA$ ($SPEED$)",
+    "description": "Progress state with ETA: downloading from web",
+    "placeholders": {
+      "percent": { "content": "$1" },
+      "eta": { "content": "$2" },
+      "speed": { "content": "$3" }
     }
   },
   "popup_state_uploading": {
@@ -79,6 +99,19 @@
     "placeholders": {
       "percent": { "content": "$1" }
     }
+  },
+  "popup_state_uploading_eta": {
+    "message": "Enviando a Drive… ($PERCENT$%) — quedan $ETA$ ($SPEED$)",
+    "description": "Progress state with ETA: uploading to Drive",
+    "placeholders": {
+      "percent": { "content": "$1" },
+      "eta": { "content": "$2" },
+      "speed": { "content": "$3" }
+    }
+  },
+  "popup_state_action_cancel_announce": {
+    "message": "Ahora puede cancelar la transferencia activa.",
+    "description": "Accessible announcement when action button turns into Cancel"
   },
   "popup_btn_cancel": {
     "message": "❌ Cancelar",

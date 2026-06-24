@@ -47,6 +47,21 @@ const progressBar       = document.getElementById("progress-bar");
 fileIcon.setAttribute("aria-hidden", "true");
 
 let isUploading = false;
+let transferStartedAt = 0;
+
+function formatSpeed(bytesPerSec) {
+  if (bytesPerSec >= 1024 * 1024) {
+    return (bytesPerSec / (1024 * 1024)).toFixed(1) + " Mo/s";
+  }
+  return (bytesPerSec / 1024).toFixed(0) + " Ko/s";
+}
+
+function formatETA(secs) {
+  if (secs < 60) return secs + "s";
+  const mins = Math.floor(secs / 60);
+  const remainingSecs = secs % 60;
+  return mins + "m " + remainingSecs + "s";
+}
 
 // ----------------------------------------------------------
 // HELPERS UI
@@ -78,20 +93,52 @@ function updateDisconnectVisibility(isAuthenticated) {
 let lastAnnouncedPercent = -1;
 let currentAnnouncedPhase = null;
 
-function setTransferState(phase, percent) {
+function setTransferState(phase, percent, bytesTransferred = 0, totalBytes = 0) {
   if (phase === "downloading" || phase === "uploading") {
+    if (transferStartedAt === 0) {
+      transferStartedAt = Date.now();
+    }
+
     isUploading = true;
     progressContainer.classList.remove("hidden");
     progressBar.style.width = percent + "%";
     progressBar.setAttribute("aria-valuenow", percent);
 
+    // Calculer l'ETA et la vitesse si données suffisantes
+    let statusText = "";
+    const elapsedMs = Date.now() - transferStartedAt;
+    if (bytesTransferred > 0 && totalBytes > 0 && elapsedMs > 1000) {
+      const speedBytesPerSec = bytesTransferred / (elapsedMs / 1000);
+      if (speedBytesPerSec > 0) {
+        const remainingSecs = Math.round((totalBytes - bytesTransferred) / speedBytesPerSec);
+        const speedStr = formatSpeed(speedBytesPerSec);
+        const etaStr = formatETA(remainingSecs);
+
+        if (phase === "downloading") {
+          statusText = t("popup_state_downloading_eta", { PERCENT: percent, ETA: etaStr, SPEED: speedStr });
+        } else {
+          statusText = t("popup_state_uploading_eta", { PERCENT: percent, ETA: etaStr, SPEED: speedStr });
+        }
+      }
+    }
+
+    // Fallback si pas d'ETA
+    if (!statusText) {
+      if (phase === "downloading") {
+        statusText = t("popup_state_downloading", { PERCENT: percent });
+      } else {
+        statusText = t("popup_state_uploading", { PERCENT: percent });
+      }
+    }
+
     // Annonce live throttlée : seulement si changement de phase ou palier de 10%
     const bucket = Math.floor((percent ?? 0) / 10) * 10;
     if (phase !== currentAnnouncedPhase || bucket > lastAnnouncedPercent) {
-      if (phase === "downloading") {
-        setStatusLive(t("popup_state_downloading", { PERCENT: percent }));
+      // A11y-01 : Annoncer le passage en mode annulation de bouton une fois au début
+      if (currentAnnouncedPhase === null) {
+        setStatusLive(t("popup_state_action_cancel_announce") + " " + statusText);
       } else {
-        setStatusLive(t("popup_state_uploading", { PERCENT: percent }));
+        setStatusLive(statusText);
       }
       lastAnnouncedPercent = bucket;
       currentAnnouncedPhase = phase;
@@ -106,6 +153,7 @@ function setTransferState(phase, percent) {
     disconnectBtn.classList.add("hidden");
   } else {
     isUploading = false;
+    transferStartedAt = 0;
     progressContainer.classList.add("hidden");
     progressBar.style.width = "0%";
     progressBar.setAttribute("aria-valuenow", 0);
@@ -374,6 +422,11 @@ uploadBtn.addEventListener("click", async () => {
         driveLinkRow.classList.remove("hidden");
         driveLink.focus();
       }
+
+      // UX-01 : Permettre le ré-upload après un succès en réactivant le bouton après 5 secondes
+      setTimeout(() => {
+        uploadBtn.disabled = false;
+      }, 5000);
     } else {
       setAuthBadge("error", t("popup_auth_error"));
       setStatusLive(response.error);
@@ -430,7 +483,9 @@ disconnectBtn.addEventListener("click", async () => {
   setAuthBadge("disconnected", t("popup_auth_disconnected"));
   setStatusLive(t("popup_disconnected_status"));
   updateDisconnectVisibility(false);
-  uploadBtn.disabled = false;
+
+  // UX-02 : Réinitialisation complète de l'état du fichier après déconnexion
+  await initTabStatus();
 });
 
 // ----------------------------------------------------------
@@ -440,7 +495,7 @@ disconnectBtn.addEventListener("click", async () => {
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "uploadProgress") {
     const phase = message.phase || message.state;
-    setTransferState(phase, message.percent);
+    setTransferState(phase, message.percent, message.bytesTransferred, message.totalBytes);
   }
   // Message de fin d'upload envoyé par le background
   if (message.action === "uploadComplete") {
@@ -455,6 +510,11 @@ browser.runtime.onMessage.addListener((message) => {
         driveLinkRow.classList.remove("hidden");
         driveLink.focus();
       }
+
+      // UX-01 : Permettre le ré-upload après un succès en réactivant le bouton après 5 secondes
+      setTimeout(() => {
+        uploadBtn.disabled = false;
+      }, 5000);
     } else {
       setAuthBadge("error", t("popup_auth_error"));
       setStatusLive(message.error || t("err_upload_failed"));

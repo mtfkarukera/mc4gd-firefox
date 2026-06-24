@@ -368,12 +368,11 @@ header, section, footer {
   background-color: var(--status-error);
   color: var(--btn-text);
   font-size: 12px;
-  border-radius: var(--radius-sm);
 }
 
 .close-btn:hover {
   background-color: var(--error-hover);
-  color: #fff;
+  color: var(--btn-text);
 }
 
 .close-btn.confirm-active {

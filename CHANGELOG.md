@@ -5,6 +5,24 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.12.0] — 2026-06-24
+
+### Ajouté
+- Débit instantané et estimation du temps restant (ETA) dans les indicateurs de progression de transfert pour les fichiers volumineux.
+- Dialogue d'onboarding enrichi détaillant les formats de fichiers supportés, le dossier cible de stockage Google Drive, et la nature locale et sécurisée du traitement.
+- Liste ordonnée de puces accessible pour la description des fonctionnalités clés dans l'onboarding overlay.
+- Annonce vocale ARIA live lors de la transition du bouton principal vers l'action "Annuler".
+- Intégration fluide avec les 6 dictionnaires i18n mis à jour.
+
+### Corrigé / Amélioré
+- Réactivation automatique du bouton d'envoi 5 secondes après un succès pour permettre un ré-upload immédiat si souhaité.
+- Réinitialisation complète et réévaluation dynamique de la compatibilité de l'onglet actif lors d'une déconnexion utilisateur.
+- Retry automatique avec backoff exponentiel (jusqu'à 3 tentatives) en cas d'erreur de téléchargement source ou de timeout réseau/serveur temporaire.
+- Avortement immédiat et libération des ressources en arrière-plan si l'utilisateur navigue ou rafraîchit l'onglet actif pendant un transfert.
+- Résilience accrue et token OAuth2 renouvelé proprement en cas d'erreur 401 interceptée sur la recherche ou la création du dossier parent.
+- Remplacement du survol statique `#fff` sur `.close-btn:hover` par la variable CSS correspondante `--btn-text`.
+- Suppression de la propriété redundante `border-radius` sur le bouton de déconnexion.
+
 ## [1.11.0] — 2026-06-24
 
 ### Refactorisé

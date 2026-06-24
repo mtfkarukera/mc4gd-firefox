@@ -13,7 +13,6 @@
   "popup_btn_uploading": { "message": "Wird gesendet…", "description": "Upload button text when sending" },
   "popup_btn_disconnect": { "message": "Trennen", "description": "Disconnect button text" },
   "popup_btn_disconnect_confirm": { "message": "Trennung bestätigen", "description": "Disconnect button confirmation state" },
-  "popup_uploading_label": { "message": "Upload läuft…", "description": "Label during upload" },
   "popup_link_view": { "message": "📂 In Google Drive ansehen", "description": "Link to view the uploaded file" },
   "popup_success": {
     "message": "$FILE_NAME$ gesendet!",
@@ -66,11 +65,32 @@
     "message": "Loslegen",
     "description": "Onboarding button text"
   },
+  "onboarding_feat_formats": {
+    "message": "Unterstützt PDFs, Bilder, Audio, Video, EPUBs und Office-Dokumente.",
+    "description": "Supported formats list item"
+  },
+  "onboarding_feat_destination": {
+    "message": "Speichert Dateien direkt im Ordner „Imports Magic Clipper“ auf Ihrem Google Drive.",
+    "description": "Google Drive folder destination list item"
+  },
+  "onboarding_feat_security": {
+    "message": "100 % lokal und sicher: Keine Drittanbieter-Server, direkte Google OAuth2-Verbindung.",
+    "description": "Direct auth and privacy list item"
+  },
   "popup_state_downloading": {
     "message": "Herunterladen… ($PERCENT$%)",
     "description": "Progress state: downloading from web",
     "placeholders": {
       "percent": { "content": "$1" }
+    }
+  },
+  "popup_state_downloading_eta": {
+    "message": "Wird heruntergeladen… ($PERCENT$%) — noch $ETA$ ($SPEED$)",
+    "description": "Progress state with ETA: downloading from web",
+    "placeholders": {
+      "percent": { "content": "$1" },
+      "eta": { "content": "$2" },
+      "speed": { "content": "$3" }
     }
   },
   "popup_state_uploading": {
@@ -79,6 +99,19 @@
     "placeholders": {
       "percent": { "content": "$1" }
     }
+  },
+  "popup_state_uploading_eta": {
+    "message": "Wird an Drive gesendet… ($PERCENT$%) — noch $ETA$ ($SPEED$)",
+    "description": "Progress state with ETA: uploading to Drive",
+    "placeholders": {
+      "percent": { "content": "$1" },
+      "eta": { "content": "$2" },
+      "speed": { "content": "$3" }
+    }
+  },
+  "popup_state_action_cancel_announce": {
+    "message": "Sie können die aktive Übertragung jetzt abbrechen.",
+    "description": "Accessible announcement when action button turns into Cancel"
   },
   "popup_btn_cancel": {
     "message": "❌ Abbrechen",
