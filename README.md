@@ -120,4 +120,4 @@ Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 Ce projet est sous licence **MPL-2.0** (Mozilla Public License Version 2.0).
 
 ---
-*Développé par **MTF Karukera**. Découvre toutes les solutions logicielles et outils de productivité de la suite **magic-softs** sur [magic-clipper.mtfk.fr](https://magic-clipper.mtfk.fr/).*
+*Développé par **MTF Karukera**. Découvre toutes les solutions logicielles et outils de productivité de la suite **magic-softs** sur [mtfk.fr](https://mtfk.fr).*

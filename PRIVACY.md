@@ -21,5 +21,5 @@ This extension is fully open source under the Mozilla Public License 2.0 (MPL-2.
 https://github.com/mtfkarukera/mc4gd-firefox
 
 ## 6. Contact & Support
-For any privacy-related questions or to report issues, please open an issue on our GitHub repository:
+For any privacy-related questions or to report issues, please contact us at contact@mtfk.fr or open an issue on our GitHub repository:
 https://github.com/mtfkarukera/mc4gd-firefox
