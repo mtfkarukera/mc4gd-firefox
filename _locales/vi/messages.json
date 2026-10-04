@@ -11,6 +11,7 @@
   "popup_local_file": { "message": "Quyền truy cập tệp cục bộ bị giới hạn bởi Firefox", "description": "Message when a local file is detected" },
   "popup_btn_upload": { "message": "⬆️ Gửi lên Google Drive", "description": "Upload button text" },
   "popup_btn_uploading": { "message": "Đang gửi…", "description": "Upload button text when sending" },
+  "popup_btn_connect": { "message": "Kết nối", "description": "Connect button text" },
   "popup_btn_disconnect": { "message": "Ngắt kết nối", "description": "Disconnect button text" },
   "popup_btn_disconnect_confirm": { "message": "Xác nhận ngắt kết nối", "description": "Disconnect button confirmation state" },
   "popup_link_view": { "message": "📂 Xem trong Google Drive", "description": "Link to view the uploaded file" },
@@ -148,6 +149,10 @@
   "popup_disconnected_status": {
     "message": "Đã đăng xuất. Nhấn Gửi để kết nối lại.",
     "description": "Status message shown after disconnect"
+  },
+  "popup_disconnected_status_web": {
+    "message": "Đã đăng xuất. Nhấp Kết nối hoặc chọn định dạng ở trên.",
+    "description": "Status message shown after disconnect in web capture mode"
   },
   "lang_auto": {
     "message": "Tự động",

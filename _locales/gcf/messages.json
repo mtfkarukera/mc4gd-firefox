@@ -35,6 +35,9 @@
   "popup_link_view": {
     "message": "📂 Gadé adan Google Drive"
   },
+  "popup_btn_connect": {
+    "message": "Konekté"
+  },
   "popup_btn_disconnect": {
     "message": "Délyannaj"
   },
@@ -170,6 +173,10 @@
   "popup_disconnected_status": {
     "message": "Dékonetè. Klik Anvoyé pou konektè ankò.",
     "description": "Status message shown after disconnect"
+  },
+  "popup_disconnected_status_web": {
+    "message": "Dékonetè. Kliké anlè Konekté oben chwazi on fòwma anho.",
+    "description": "Status message shown after disconnect in web capture mode"
   },
   "lang_auto": {
     "message": "Auto"

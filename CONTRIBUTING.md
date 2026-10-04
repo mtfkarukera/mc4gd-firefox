@@ -1,6 +1,6 @@
 # CONTRIBUTING.md — Magic Clipper for Google Drive (MC4GD)
 ## Guide de développement & de livraison
-### Mis à jour : Juillet 2026 — v1.15.0
+### Mis à jour : Octobre 2026 — v1.24.0
 
 > Ce fichier est **public** et commité sur GitHub.
 > Il documente le savoir-faire d'ingénierie et les procédures de livraison du projet.

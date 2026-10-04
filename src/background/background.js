@@ -1014,6 +1014,14 @@ async function handleCaptureWebPage(tab, format) {
   }
   activeUploads[tabId] = { phase: 'capturing', startedAt: Date.now() };
 
+  // Vérifier et obtenir le token OAuth AVANT d'extraire la page ou d'injecter des scripts
+  try {
+    await getValidToken();
+  } catch (authErr) {
+    delete activeUploads[tabId];
+    return { success: false, error: errorToI18nMessage(authErr) };
+  }
+
   try {
     // Déterminer la séquence d'injection selon le format
     let scripts;
@@ -1352,6 +1360,18 @@ async function handleMessage(message) {
         return response;
       } finally {
         fileBlob = null;
+      }
+    }
+
+    case "login": {
+      try {
+        const token = await getAccessToken(true);
+        if (token) {
+          return { success: true };
+        }
+        return { success: false, error: t("popup_auth_error") };
+      } catch (err) {
+        return { success: false, error: errorToI18nMessage(err) };
       }
     }
 

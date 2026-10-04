@@ -387,6 +387,20 @@ header, section, footer {
   color: var(--badge-text-loading);
 }
 
+.connect-btn {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  background-color: var(--primary-color);
+  color: var(--btn-text);
+  font-size: 12px;
+}
+
+.connect-btn:not(:disabled):hover {
+  background-color: var(--primary-hover);
+  color: var(--btn-text);
+}
+
 /* ----------------------------------------------------------
    FOOTER
    ---------------------------------------------------------- */
@@ -435,7 +449,7 @@ footer {
 
 @media (pointer: coarse) {
   .primary-btn { padding: 16px; font-size: 15px; }
-  .close-btn { padding: 14px; font-size: 14px; }
+  .close-btn, .connect-btn { padding: 14px; font-size: 14px; }
   /* Zone de toucher minimale 44px pour le sélecteur de langue (A-04) */
   #lang-select {
     padding: 10px 12px;

@@ -33,6 +33,7 @@ const fileIcon          = document.getElementById('file-icon');
 const fileName          = document.getElementById('file-name');
 const driveLinkRow      = document.getElementById('drive-link-row');
 const driveLink         = document.getElementById('drive-link');
+const connectBtn        = document.getElementById('connect-btn');
 const disconnectBtn     = document.getElementById('disconnect-btn');
 const statusMessage     = document.getElementById('status-message');
 const btnSpinner        = document.getElementById('btn-spinner');
@@ -88,16 +89,20 @@ function setAuthBadge(state, label) {
 }
 
 /**
- * Met à jour la visibilité du bouton Déconnecter selon l'état d'authentification.
+ * Met à jour la visibilité des boutons Se connecter / Déconnecter selon l'état d'authentification.
  * @param {boolean} isAuthenticated — true si un accessToken existe
  */
-function updateDisconnectVisibility(isAuthenticated) {
+function updateAuthButtonsVisibility(isAuthenticated) {
   if (isAuthenticated) {
+    connectBtn.classList.add("hidden");
     disconnectBtn.classList.remove("hidden");
   } else {
+    connectBtn.classList.remove("hidden");
     disconnectBtn.classList.add("hidden");
   }
 }
+// Rétrocompatibilité interne
+const updateDisconnectVisibility = updateAuthButtonsVisibility;
 
 // Throttle des annonces de progression (A-07) — toutes les 10%
 let lastAnnouncedPercent = -1;
@@ -161,8 +166,9 @@ function setTransferState(phase, percent, bytesTransferred = 0, totalBytes = 0) 
     uploadBtn.classList.add("cancel-active");
     btnText.textContent = t("popup_btn_cancel");
     setAuthBadge("loading", t("popup_btn_uploading"));
-    // Masquer Déconnecter pendant un transfert
+    // Masquer Déconnecter et Se connecter pendant un transfert
     disconnectBtn.classList.add("hidden");
+    connectBtn.classList.add("hidden");
   } else {
     isUploading = false;
     transferStartedAt = 0;
@@ -337,12 +343,12 @@ async function initTabStatus() {
       fileInfo.classList.remove('warning');
       fileIcon.textContent = '🌐';
       fileName.textContent = t('popup_web_page') || 'Page web détectée';
-      capturePdfBtn.disabled = !hasToken;
-      captureMdBtn.disabled  = !hasToken;
+      capturePdfBtn.disabled = false;
+      captureMdBtn.disabled  = false;
       if (hasToken) {
         setStatusLive(t('popup_capture_ready') || 'Capture de page disponible');
       } else {
-        setStatusLive(t('popup_disconnected_status'));
+        setStatusLive(t('popup_disconnected_status_web'));
       }
     }
   } catch (e) {
@@ -577,6 +583,35 @@ disconnectBtn.addEventListener("click", async () => {
 
   // UX-02 : Réinitialisation complète de l'état du fichier après déconnexion
   await initTabStatus();
+});
+
+// ----------------------------------------------------------
+// CONNEXION — clic sur le bouton Se connecter
+// ----------------------------------------------------------
+
+connectBtn.addEventListener("click", async () => {
+  connectBtn.disabled = true;
+  setAuthBadge("loading", t("popup_auth_loading"));
+  setStatusLive(t("popup_auth_loading"));
+
+  try {
+    const response = await browser.runtime.sendMessage({ action: "login" });
+    if (response.success) {
+      setAuthBadge("success", t("popup_auth_connected"));
+      updateAuthButtonsVisibility(true);
+      await initTabStatus();
+    } else {
+      setAuthBadge("disconnected", t("popup_auth_disconnected"));
+      setStatusLive(response.error || t("popup_auth_error"));
+      updateAuthButtonsVisibility(false);
+    }
+  } catch (err) {
+    setAuthBadge("error", t("popup_auth_error"));
+    setStatusLive(t("err_network"));
+    updateAuthButtonsVisibility(false);
+  } finally {
+    connectBtn.disabled = false;
+  }
 });
 
 let isProcessingResult = false;

@@ -1,4 +1,4 @@
-# Magic Clipper for Google Drive ![Version 1.23.0](https://img.shields.io/badge/version-1.23.0-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
+# Magic Clipper for Google Drive ![Version 1.24.0](https://img.shields.io/badge/version-1.24.0-blue.svg) ![Licence MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)
 
 
 Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre Google Drive en un seul clic.
@@ -13,11 +13,11 @@ Envoyez n'importe quel fichier que Firefox peut afficher directement sur votre G
 | Upload résumable chunké | Gestion robuste des fichiers volumineux (jusqu'à 200 Mo) via upload par morceaux de 8 Mo avec reprise réseau automatique. |
 | Barre de progression | Indication en temps réel de l'état du téléchargement et du téléversement avec pourcentage, débit instantané et estimation du temps restant (ETA). |
 | Annulation d'upload | Possibilité d'avorter un transfert en cours à tout moment d'un simple clic. |
-| Persistance & Reconnexion | L'état d'upload survit à la suspension du background (Event Page) et la popup se reconnecte automatiquement. |
+| Persistance & Reconnexion | L'état d'upload survit à la suspension du background (Event Page), la popup se reconnecte automatiquement, et un bouton dédié permet la reconnexion à tout moment. |
 | Validation Content-Type | Détection et rejet des redirections vers des pages de login déguisées en fichiers. |
 | Dossier intelligent | Création automatique d'un dossier `"Imports Magic Clipper"` s'il n'existe pas. |
 | Résilience API | Système de retry automatique (1 essai) sur erreurs 401 (token expiré) et 404 (dossier supprimé). |
-| Multilingue (i18n) | Traduction native en 5 langues (EN, FR, DE, ES, VI) avec fallback automatique. |
+| Multilingue (i18n) | Traduction native en 6 langues (EN, FR, DE, ES, VI, GCF) avec fallback automatique. |
 | Mode sombre natif | Implémenté 100% en CSS via variables, zéro JavaScript. |
 | Zéro serveur | Upload direct depuis votre navigateur vers Google Drive, aucun serveur intermédiaire. |
 
@@ -118,3 +118,6 @@ Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 ## 📄 Licence
 
 Ce projet est sous licence **MPL-2.0** (Mozilla Public License Version 2.0).
+
+---
+*Développé par **MTF Karukera**. Découvre toutes les solutions logicielles et outils de productivité de la suite **magic-softs** sur [magic-clipper.mtfk.fr](https://magic-clipper.mtfk.fr/).*

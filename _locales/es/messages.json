@@ -11,6 +11,7 @@
   "popup_local_file": { "message": "Acceso local restringido por Firefox", "description": "Message when a local file is detected" },
   "popup_btn_upload": { "message": "⬆️ Enviar a Google Drive", "description": "Upload button text" },
   "popup_btn_uploading": { "message": "Enviando…", "description": "Upload button text when sending" },
+  "popup_btn_connect": { "message": "Conectar", "description": "Connect button text" },
   "popup_btn_disconnect": { "message": "Desconectar", "description": "Disconnect button text" },
   "popup_btn_disconnect_confirm": { "message": "Confirmar desconexión", "description": "Disconnect button confirmation state" },
   "popup_link_view": { "message": "📂 Ver en Google Drive", "description": "Link to view the uploaded file" },
@@ -148,6 +149,10 @@
   "popup_disconnected_status": {
     "message": "Desconectado. Haga clic en Enviar para volver a conectarse.",
     "description": "Status message shown after disconnect"
+  },
+  "popup_disconnected_status_web": {
+    "message": "Desconectado. Haga clic en Conectar o elija un formato arriba.",
+    "description": "Status message shown after disconnect in web capture mode"
   },
   "lang_auto": {
     "message": "Auto",

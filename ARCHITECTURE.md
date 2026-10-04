@@ -1,5 +1,5 @@
 # ARCHITECTURE.md — Magic Clipper for Google Drive (MC4GD)
-## État de la Codebase — v1.20.0 — Août 2026
+## État de la Codebase — v1.24.0 — Octobre 2026
 
 > Documentation technique d'architecture pour le projet MC4GD.
 
@@ -247,13 +247,15 @@ Le script de background écoute sur `browser.runtime.onMessage.addListener` et a
 | `FETCH_IMAGE` | `{ url }` | Proxy CORS : télécharge une image distante et la retourne sous forme de Data URL base64 | `{ success: true, dataUrl }` ou `{ success: false, error }` |
 | `getUploadStatus` | Aucun | Retourne l'état actuel d'un transfert actif pour cet onglet (reconnexion) | `{ phase: "downloading"\|"uploading"\|"success"\|"error", percent, fileName, mimeType, link, error }` ou `{ active: false }` |
 | `cancelUpload` | Aucun | Interrompt le transfert en cours (téléchargement ou upload) | `{ success: true }` |
+| `login` | Aucun | Déclenche le flux OAuth2 Google interactif et enregistre le token | `{ success: true }` ou `{ success: false, error }` |
 | `disconnect` | Aucun | Révoque le token Google OAuth2 et vide le stockage | `{ success: true }` |
 | `getRedirectURL` | Aucun | Récupère l'URL de redirection de l'extension (pour débogage) | `{ url }` |
 
 *Note de robustesse* : Le listener de messages retourne impérativement `true` de manière synchrone pour maintenir le port de communication ouvert lors des résolutions de promesses asynchrones.
 
 ### 7.2 Contrôle Visuel et États UI
-*   **Popup adaptative** : Si l'onglet actif héberge un fichier direct (PDF, image, etc.), l'UI affiche la carte de fichier et le bouton unique d'envoi. S'il s'agit d'une page HTML standard, l'UI s'adapte en affichant les deux boutons de capture (« Capture PDF » et « Capture Markdown »).
+*   **Popup adaptative** : Si l'onglet actif héberge un fichier direct (PDF, image, etc.), l'UI affiche la carte de fichier et le bouton unique d'envoi. S'il s'agit d'une page HTML standard, l'UI s'adapte en affichant les deux boutons de capture (« Document PDF » et « Markdown »).
+*   **Reconnexion & Toggle d'authentification** : Lorsque l'extension est déconnectée, un bouton « Se connecter » (`#connect-btn`) est automatiquement affiché dans le footer. De plus, les boutons de capture web restent actifs : cliquer sur un export déclenche l'authentification OAuth à la volée avant toute extraction DOM ou injection de script.
 *   **Onboarding** : Si la clé `hasSeenWelcome` n'existe pas dans le stockage local, un volet d'onboarding s'affiche en superposition avec un effet de verre dépoli (Glassmorphism réel permis par les orbes animées en CSS).
 *   **Bouton de déconnexion double-clic** : Pour éviter les déconnexions accidentelles sans utiliser d'alerte bloquante `confirm()` (interdite ou non recommandée en extension moderne), le bouton passe dans un état de confirmation temporaire pendant 3 secondes (devient ambre avec texte sombre et la mention `"Confirmer la déconnexion"`). Si l'utilisateur clique à nouveau, la déconnexion s'exécute, sinon l'état est réinitialisé.
 *   **Accessibilité Clavier** : Tous les éléments interactifs (`button`, `select`, `a`) gèrent la pseudo-classe `:focus-visible` pour afficher un anneau de sélection visuellement contrasté et esthétique pour les utilisateurs naviguant au clavier.

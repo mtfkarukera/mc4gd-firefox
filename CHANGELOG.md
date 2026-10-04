@@ -5,6 +5,17 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.24.0] — 2026-10-05
+
+### Ajouté
+- 🔑 **Bouton « Se connecter » Dédié** : Intégration d'un bouton d'authentification direct dans le pied de page de la popup lorsque l'extension est déconnectée, permettant une reconnexion immédiate à froid depuis n'importe quel onglet.
+- ⚡ **Action `login` en Arrière-Plan** : Nouveau handler de message dans `background.js` orchestrant l'authentification OAuth2 interactive via `browser.identity.launchWebAuthFlow()` et la persistance du token.
+- 🌍 **Internationalisation Complète** : Nouvelles clés `popup_btn_connect` et `popup_disconnected_status_web` ajoutées et synchronisées dans les 6 langues (`fr`, `en`, `de`, `es`, `vi`, `gcf`).
+
+### Corrigé / Amélioré
+- 🛡️ **Résolution de l'Impasse d'Interface (Deadlock UI)** : Déverrouillage des boutons de capture (« Document PDF » et « Markdown ») en mode déconnecté sur les pages web. Cliquer sur un format d'exportation déclenche désormais l'authentification Google à la volée avant l'injection des scripts et l'extraction DOM.
+- 💬 **Clarté Contextuelle des Statuts** : Adaptation dynamique des messages d'aide dans le footer selon le type de page (page web capturable vs fichier direct).
+
 ## [1.23.0] — 2026-08-02
 
 ### Modifié / Amélioré
