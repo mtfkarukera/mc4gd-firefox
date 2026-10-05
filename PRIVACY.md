@@ -1,25 +1,25 @@
 # Privacy Policy — Magic Clipper for Google Drive
 
-**Last updated:** 2026-06-15
+**Last updated:** October 2026
 
 ## 1. No Data Collection
-Magic Clipper for Google Drive (MC4GD) does not collect, track, store, or transmit any personal data or browsing history to external or third-party servers. All processing and network requests occur directly from your browser.
+Magic Clipper for Google Drive (MC4GD) does not collect, track, store, or transmit any personal data, telemetry, or browsing history to external or third-party servers. All processing and network requests occur directly from your browser.
 
 ## 2. Google Drive Access & Scope Justification
-To upload your selected files, the extension requests OAuth 2.0 access to your Google Drive using the full `https://www.googleapis.com/auth/drive` scope. 
-* **Why full `drive` scope?** This scope is required to search your Google Drive for any pre-existing `"Imports Magic Clipper"` folder created in previous sessions or on other devices. The narrower `drive.file` scope restricts the extension to only seeing files it created during the current installation/session. Using `drive.file` would make it impossible to detect pre-existing folders, causing duplicate folders to be created.
-* **Access limitation**: The extension strictly uses this permission to locate/create the `"Imports Magic Clipper"` folder and upload your selected PDFs, images, or documents. It does not read, modify, or delete any other files in your Google Drive.
+To upload your selected files, the extension requests OAuth 2.0 access to your Google Drive using the `https://www.googleapis.com/auth/drive.file` scope.
+* **Scope limitation**: Access is strictly limited to files and folders created or opened by Magic Clipper itself. The extension cannot view, access, modify, or delete any other files or folders in your Google Drive.
+* **Purpose**: This permission is used solely to locate or create a dedicated folder named `"Imports Magic Clipper"` and upload your selected PDFs, documents, media, or webpage captures.
 
 ## 3. Serverless Architecture
-The extension connects directly to Google Drive API v3 endpoints. There are no intermediary or proxy servers. Your files are downloaded from the source tab and uploaded to Google Drive without passing through any third party.
+The extension connects directly to official Google Drive API v3 endpoints. There are no intermediary or proxy servers. Your files are downloaded from the source tab and uploaded to Google Drive without passing through any third party.
 
 ## 4. Local Storage
-The OAuth2 access token, token expiration timestamp, the cached Google Drive folder ID, and your manual language selection are stored locally on your device via `browser.storage.local`. This data never leaves your device except to authenticate directly with Google APIs.
+The OAuth2 access token, token expiration timestamp, the cached Google Drive folder ID, and your interface language selection are stored locally on your device via `browser.storage.local`. This data never leaves your device except to authenticate directly with Google APIs.
 
 ## 5. Open Source
 This extension is fully open source under the Mozilla Public License 2.0 (MPL-2.0). The complete source code can be reviewed at:
 https://github.com/mtfkarukera/mc4gd-firefox
 
 ## 6. Contact & Support
-For any privacy-related questions or to report issues, please contact us at contact@mtfk.fr or open an issue on our GitHub repository:
+For any privacy-related questions, support, or bug reports, please contact us at **contact@mtfk.fr** or open an issue on our GitHub repository:
 https://github.com/mtfkarukera/mc4gd-firefox

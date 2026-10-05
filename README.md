@@ -97,7 +97,7 @@ L'architecture sépare strictement l'UI (popup) et la logique (background) :
 ### Configuration OAuth2
 1. Allez sur Google Cloud Console.
 2. Créez un ID client OAuth (Type: Application de bureau).
-3. Ajoutez le scope `https://www.googleapis.com/auth/drive`.
+3. Ajoutez le scope non sensible `https://www.googleapis.com/auth/drive.file`.
 4. Mettez à jour le `client_id` dans `manifest.json`.
 
 ## 🤝 Contribuer

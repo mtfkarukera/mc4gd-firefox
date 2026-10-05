@@ -34,7 +34,7 @@ Aucun `client_secret` n\'est nécessaire — le Client ID suffit pour les extens
 
 ```javascript
 const CLIENT_ID   = "VOTRE_CLIENT_ID.apps.googleusercontent.com";
-const SCOPES      = "https://www.googleapis.com/auth/drive";
+const SCOPES      = "https://www.googleapis.com/auth/drive.file";
 const redirectURL = browser.identity.getRedirectURL();
 
 const authURL = "https://accounts.google.com/o/oauth2/auth"
@@ -117,20 +117,12 @@ async function disconnect() {
 
 | Scope | Accès | Utilisation MC4GD |
 |-------|-------|-------------------|
-| `https://www.googleapis.com/auth/drive` | Accès complet Drive | **Scope utilisé** |
-| `https://www.googleapis.com/auth/drive.file` | Fichiers créés par l\'extension uniquement | ❌ Insuffisant |
+| `https://www.googleapis.com/auth/drive.file` | Fichiers et dossiers créés par l'extension | **Scope utilisé (Non sensible)** |
+| `https://www.googleapis.com/auth/drive` | Accès complet Drive | ❌ Interdit (Scope restreint / audit CASA) |
 
-> Pourquoi `drive` et non `drive.file` ?
-> Le scope `drive.file` limite `files.list` aux seuls fichiers créés par l\'extension
-> dans la session courante. Un dossier `"Imports Magic Clipper"` créé lors d\'une
-> session précédente est **invisible** avec ce scope — `files.list` retourne toujours
-> `[]`, forçant la création d\'un doublon à chaque session.
-> Le scope `drive` est requis pour que la recherche de dossier préexistant fonctionne.
->
-> **Note AMO** : ce scope doit être justifié dans le tableau blanc des réviseurs.
-> Formulation recommandée : *"The drive scope is required to search for a pre-existing
-> upload folder created in a previous session. The drive.file scope would cause a new
-> duplicate folder to be silently created on every install or reinstall."*
+> **Pourquoi `drive.file` et non `drive` ?**
+> Le scope `drive.file` est classé comme non sensible par Google et dispense de l'audit de sécurité tiers CASA Tier 2/3.
+> Il octroie l'accès complet aux fichiers et dossiers créés par l'extension. L'identifiant du dossier `"Imports Magic Clipper"` est persisté dans `browser.storage.local` et la recherche retrouve les dossiers créés par l'application.
 
 ---
 

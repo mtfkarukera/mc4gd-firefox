@@ -18,24 +18,26 @@
 </head>
 <body>
   <h1>Privacy Policy – Magic Clipper for Google Drive</h1>
-  <p><em>Last updated: June 2026</em></p>
+  <p><em>Last updated: October 2026</em></p>
 
   <h2>1. No Data Collection</h2>
-  <p>Magic Clipper for Google Drive does not collect, track, store, or transmit any personal data or browsing activity to external or third-party servers. All processing and request execution occur locally within your browser.</p>
+  <p>Magic Clipper for Google Drive does not collect, track, store, or transmit any personal data, telemetry, or browsing activity to external or third-party servers. All processing and request execution occur locally within your browser.</p>
 
   <h2>2. Google Drive Access & Scope Justification</h2>
-  <p>The extension requests OAuth 2.0 access to your Google Drive via the full <code>https://www.googleapis.com/auth/drive</code> scope. This permission is used solely to find or create the folder named <code>"Imports Magic Clipper"</code> and upload your selected files to it.</p>
-  <p><strong>Why is the full scope needed?</strong> The full <code>drive</code> scope is required to search for pre-existing folders created during previous sessions or on other devices. The narrower <code>drive.file</code> scope is insufficient because it only permits the extension to view files/folders that it created during the current session, which would result in creating duplicate import folders. We do not read, edit, or delete any of your other Google Drive files.</p>
+  <p>The extension requests OAuth 2.0 access to your Google Drive via the specific <code>https://www.googleapis.com/auth/drive.file</code> scope.</p>
+  <p><strong>Scope Usage:</strong> This permission is used solely to locate or create a single dedicated folder named <code>"Imports Magic Clipper"</code> in your Google Drive and upload the files, documents, or webpage captures you explicitly choose to send. It grants access <strong>only</strong> to the files and folders created or opened by Magic Clipper. The extension has zero access to any of your other personal Google Drive files, folders, or documents.</p>
 
   <h2>3. Local Storage</h2>
-  <p>Your OAuth2 access token, expiration timestamps, cached Google Drive folder ID, and manual language preferences are stored locally on your device via <code>browser.storage.local</code>. This data never leaves your device except when authenticating directly with Google APIs.</p>
+  <p>Your OAuth2 access token, token expiration timestamp, cached Google Drive folder ID, and interface language preferences are stored locally on your device via <code>browser.storage.local</code>. This data never leaves your device except when authenticating directly with official Google APIs.</p>
 
   <h2>4. Cookies and Tracking</h2>
-  <p>This extension does not use cookies, analytics, or any tracking tools.</p>
+  <p>This extension does not use cookies, advertising identifiers, analytics, or any tracking tools.</p>
 
   <h2>5. Contact & Open Source</h2>
-  <p>This extension is fully open source. For any support or privacy inquiries, contact us at <a href="mailto:contact@mtfk.fr">contact@mtfk.fr</a>, or report issues on our GitHub repository:<br>
-    <a href="https://github.com/mtfkarukera/mc4gd-firefox" target="_blank" rel="noopener noreferrer">https://github.com/mtfkarukera/mc4gd-firefox</a>
+  <p>This extension is fully open source under the Mozilla Public License 2.0 (MPL-2.0). For any privacy inquiries or support, contact us at <a href="mailto:contact@mtfk.fr">contact@mtfk.fr</a>.</p>
+  <p>
+    Official Website: <a href="https://magic-clipper.mtfk.fr/" target="_blank" rel="noopener noreferrer">https://magic-clipper.mtfk.fr/</a><br>
+    Source code & Issue Tracker: <a href="https://github.com/mtfkarukera/mc4gd-firefox" target="_blank" rel="noopener noreferrer">https://github.com/mtfkarukera/mc4gd-firefox</a>
   </p>
 </body>
 </html>

@@ -14,14 +14,15 @@
 ### 1.1 Scope OAuth2 — `drive` et non `drive.file`
 
 ```
-✅ https://www.googleapis.com/auth/drive
-❌ https://www.googleapis.com/auth/drive.file
+✅ https://www.googleapis.com/auth/drive.file
+❌ https://www.googleapis.com/auth/drive
 ```
 
-Le scope `drive.file` ne permet d'accéder qu'aux fichiers créés par l'extension elle-même.
-Un `files.list` avec ce scope retourne toujours 0 résultats sur les dossiers préexistants,
-même si l'utilisateur a déjà un dossier `"Imports Magic Clipper"` créé lors d'une session
-précédente. Utiliser le scope `drive` (accès complet) pour que la recherche fonctionne.
+Le scope `drive.file` est classé non sensible par Google et évite l'audit de sécurité CASA Tier 2/3.
+Il donne un accès complet aux fichiers et dossiers créés par l'extension elle-même.
+L'identifiant du dossier `"Imports Magic Clipper"` est persisté dans `browser.storage.local`
+pour éviter toute recherche superflue, et la recherche `files.list` retrouve bien les dossiers
+créés par l'application. Le scope complet `drive` est formellement interdit car restreint.
 
 ### 1.2 Recherche de dossier — Ne Jamais Créer de Doublon
 

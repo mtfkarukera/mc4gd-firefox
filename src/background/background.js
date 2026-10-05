@@ -14,7 +14,7 @@ import { FOLDER_NAME, MIME_MAP, initI18n, t, getFileNameFromUrl, resolveDownload
 // ----------------------------------------------------------
 
 const CLIENT_ID = "270035285728-p7ssnc4jqitu5d12j5kuouinirf7vfnf.apps.googleusercontent.com";
-const SCOPES    = "https://www.googleapis.com/auth/drive";
+const SCOPES    = "https://www.googleapis.com/auth/drive.file";
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 Mo
 const CHUNK_SIZE = 8 * 1024 * 1024; // 8 Mo — multiple de 256 Ko (exigence Google Drive API)
 const DOWNLOAD_TIMEOUT_MS = 120_000;  // 2 min

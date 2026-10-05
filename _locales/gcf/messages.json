@@ -196,21 +196,13 @@
     "message": "Ka kaptiré…",
     "description": "Status during page capture"
   },
-  "popup_btn_capture_pdf_clean": {
-    "message": "PDF Pwòp",
-    "description": "Button label for Clean PDF capture"
+  "popup_btn_capture_pdf": {
+    "message": "Dokiman PDF",
+    "description": "Button label for PDF capture"
   },
-  "popup_desc_capture_pdf_clean": {
-    "message": "Kontni netwayé san piblisite",
-    "description": "Description for Clean PDF capture"
-  },
-  "popup_btn_capture_pdf_native": {
-    "message": "PDF Enpresyon (Natif)",
-    "description": "Button label for Native 1:1 Firefox Print PDF capture"
-  },
-  "popup_desc_capture_pdf_native": {
-    "message": "Menm miz an paj 1:1 Firefox",
-    "description": "Description for Native 1:1 Firefox Print PDF capture"
+  "popup_desc_capture_pdf": {
+    "message": "Miz an paj pwòp & imaj",
+    "description": "Description for PDF capture"
   },
   "popup_btn_capture_md": {
     "message": "Markdown",

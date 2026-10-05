@@ -174,21 +174,13 @@
     "message": "Đang chụp trang…",
     "description": "Status during page capture"
   },
-  "popup_btn_capture_pdf_clean": {
-    "message": "PDF Gọn gàng",
-    "description": "Button label for Clean PDF capture"
+  "popup_btn_capture_pdf": {
+    "message": "Tài liệu PDF",
+    "description": "Button label for PDF capture"
   },
-  "popup_desc_capture_pdf_clean": {
-    "message": "Nội dung sạch không quảng cáo",
-    "description": "Description for Clean PDF capture"
-  },
-  "popup_btn_capture_pdf_native": {
-    "message": "PDF In (Gốc)",
-    "description": "Button label for Native 1:1 Firefox Print PDF capture"
-  },
-  "popup_desc_capture_pdf_native": {
-    "message": "Xuất hình ảnh 1:1 Firefox",
-    "description": "Description for Native 1:1 Firefox Print PDF capture"
+  "popup_desc_capture_pdf": {
+    "message": "Bố cục sạch và hình ảnh",
+    "description": "Description for PDF capture"
   },
   "popup_btn_capture_md": {
     "message": "Markdown",
