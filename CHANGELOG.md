@@ -5,6 +5,13 @@ Tous les changements notables de Magic Clipper for Google Drive sont documentés
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.25.0] — 2026-10-07
+
+### Modifié / Sécurité & Confidentialité
+- 🔒 **Transition Scope OAuth `drive.file` (Moindre Privilège)** : Remplacement officiel du scope sensible global (`https://www.googleapis.com/auth/drive`) par le scope ciblé restreint aux fichiers de l'application (`https://www.googleapis.com/auth/drive.file`).
+- 🛡️ **Élimination des Écrans d'Avertissement Google** : Grâce à l'association du branding validé et du scope `drive.file`, suppression totale de l'écran rouge d'avertissement Google (« Application non validée ») et de l'encadré d'alerte lors de la première autorisation sur toute machine ou session vierge (Linux, macOS, Windows).
+- 🌐 **Documentation de Confidentialité & API** : Actualisation de `PRIVACY.md`, `privacy.html`, `API-REFERENCE.md` et alignement architectural complet avec l'extension Thunderbird `mc4gd-tb`.
+
 ## [1.24.0] — 2026-10-05
 
 ### Ajouté
